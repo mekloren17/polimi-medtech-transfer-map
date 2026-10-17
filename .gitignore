@@ -25,3 +25,6 @@ Thumbs.db
 desktop.ini
 .vscode/
 .idea/
+
+# Embeddings: reproducible with src/embed/embed.py, binary and large
+data/processed/embeddings/
