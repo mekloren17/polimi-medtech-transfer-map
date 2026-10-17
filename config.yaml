@@ -1,0 +1,84 @@
+# Polimi MedTech Transfer Map — scope, thresholds and model.
+# Every output records the values used here.
+
+patents:
+  # IPC subclasses defining the medtech scope
+  ipc_classes: [A61B, A61F, A61L, A61M, A61N, G16H]
+
+startups:
+  region: Lombardia
+  # ATECO 2007 classes kept regardless of description
+  ateco_codes: ["32.50", "26.60"]
+  # Case-insensitive substrings searched in the business description.
+  # Italian and English, since descriptions mix both. Keep entries specific:
+  # generic words ("salute", "health", "benessere") let in too many unrelated companies.
+  keywords:
+    # devices and clinical practice
+    - dispositivo medico
+    - dispositivi medici
+    - medical device
+    - medtech
+    - biomedic
+    - chirurg
+    - surgical
+    - surgery
+    - protesi
+    - prosthe
+    - ortesi
+    - impiant
+    - implant
+    - catetere
+    - catheter
+    - stent
+    - cardiovascolar
+    - cardiac
+    - cardiolog
+    - ortoped
+    - orthop
+    - riabilitazion
+    - rehabilitation
+    - neurolog
+    - oncolog
+    - diagnos
+    - imaging medic
+    - medical imaging
+    - ecograf
+    - ultrasound
+    - risonanza magnetica
+    - endoscop
+    - paziente
+    - pazienti
+    - patient
+    - clinic
+    - ospedal
+    - hospital
+    - terapi
+    - therap
+    # digital health
+    - telemedicin
+    - digital health
+    - sanità digitale
+    - e-health
+    - dispositivi indossabili
+    - wearable
+    - monitoraggio dei parametri vitali
+    - vital sign
+    # materials and bioengineering
+    - biomateriali
+    - biomaterial
+    - bioingegneria
+    - bioengineering
+    - ingegneria tissutale
+    - tissue engineering
+    - medicina rigenerativa
+    - regenerative medicine
+    - bioprint
+    - organ-on-chip
+    - organ on chip
+
+embedding:
+  # Multilingual: startup descriptions are mostly Italian, patent abstracts mostly English
+  model: sentence-transformers/paraphrase-multilingual-mpnet-base-v2
+
+similarity:
+  threshold: 0.60
