@@ -1,0 +1,27 @@
+# Raw downloads: not redistributed (licences, personal data such as inventor names).
+# Only the README explaining how to obtain them is versioned.
+data/raw/*
+!data/raw/README.md
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+.pytest_cache/
+
+# Model / embedding caches
+.cache/
+*.npy
+
+# Credentials (EPO OPS keys etc.)
+.env
+
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
