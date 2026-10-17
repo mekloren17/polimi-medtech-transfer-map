@@ -9,8 +9,9 @@ The open-data list has no business description: only name, ATECO code and its di
 label. Descriptions come from:
   - data/raw/startups/websites.jsonl (src/collect/websites.py): homepage meta description,
     or og:description, or the first paragraphs of text;
-  - data/raw/startups/descriptions.csv (vat_number, description, description_source),
-    optional manual descriptions that take precedence.
+  - data/manual/startup_descriptions.csv (vat_number, description, description_source):
+    hand-edited descriptions that take precedence, e.g. website text with a person's
+    name removed. Versioned, so reruns never bring the removed text back.
 E-mail addresses and phone numbers are removed from descriptions.
 
 Usage:
@@ -25,7 +26,7 @@ import pandas as pd
 import yaml
 
 RAW_DIR = Path("data/raw/startups")
-DESCRIPTIONS = RAW_DIR / "descriptions.csv"
+DESCRIPTIONS = Path("data/manual/startup_descriptions.csv")
 WEBSITES = RAW_DIR / "websites.jsonl"
 MIN_META_CHARS = 80  # shorter meta descriptions get the page text appended
 
