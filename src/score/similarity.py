@@ -1,0 +1,131 @@
+"""Score patent-startup similarity and write data/processed/edges_similarity.csv.
+
+Cosine similarity between every patent and every startup embedding
+(src/embed/embed.py). Pairs at or above `similarity.threshold` (config.yaml) become edges.
+
+Each edge gets `top_terms`: single words and two-word phrases taken from either text that
+are closest to BOTH texts (score = min of the two cosine similarities, computed with the
+same multilingual model). They show what the match is about; they are an explanation aid,
+not the cause of the score.
+
+Usage:
+    python src/score/similarity.py [--top-terms N]
+"""
+import argparse
+import re
+from datetime import date
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import yaml
+from sentence_transformers import SentenceTransformer
+
+EMB_DIR = Path("data/processed/embeddings")
+OUT = Path("data/processed/edges_similarity.csv")
+
+STOPWORDS = set("""
+a about above after again all also among an and any are as at be been being both but by can
+could did do does doing during each either for from further had has have having here how if
+in into is it its itself may more most must no nor not of on once only or other our out over
+own same should so some such than that the their them then there these they this those
+through to too under until up upon very was we were what when where which while who whom why
+will with within without would you your
+wherein whereby thereof therein said first second third least one two three means invention
+device method system comprising comprises comprise provided least portion element elements
+il lo la i gli le un uno una di da in con su per tra fra e ed o od ma se che chi cui non
+del dello della dei degli delle al allo alla ai agli alle dal dallo dalla dai dagli dalle
+nel nello nella nei negli nelle sul sullo sulla sui sugli sulle come anche più piu dove
+quando questo questa questi queste quello quella sono essere è siamo nostro nostra nostri
+nostre loro suo sua suoi sue ogni tutti tutte tutto molto ancora già sempre solo nuovo nuova
+srl s.r.l spa s.p.a società societa azienda startup company italy italia italian milano milan
+more learn read scopri discover our we us
+""".split())
+
+WORD = re.compile(r"[a-zà-ù][a-zà-ù\-]{2,}")
+
+
+def candidate_terms(text):
+    words = [w.strip("-") for w in WORD.findall(text.lower())]
+    words = [w for w in words if len(w) >= 4 or w in {"ecg", "eeg", "mri", "dna", "rna"}]
+    unigrams = [w for w in words if w not in STOPWORDS]
+    bigrams = [f"{a} {b}" for a, b in zip(words, words[1:]) if a not in STOPWORDS and b not in STOPWORDS]
+    return set(unigrams) | set(bigrams)
+
+
+def load(name):
+    df = pd.read_parquet(EMB_DIR / f"{name}.parquet")
+    return df, np.vstack(df["embedding"].to_numpy())
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--top-terms", type=int, default=5)
+    args = parser.parse_args()
+
+    cfg = yaml.safe_load(open("config.yaml", encoding="utf-8"))
+    threshold = cfg["similarity"]["threshold"]
+    patents, P = load("patents")
+    startups, S = load("startups")
+    model_name = patents["model"].iloc[0]
+    if model_name != cfg["embedding"]["model"] or startups["model"].iloc[0] != model_name:
+        raise SystemExit("Embeddings were built with a different model: rerun src/embed/embed.py")
+
+    sim = P @ S.T  # vectors are L2-normalised
+    pi, si = np.nonzero(sim >= threshold)
+
+    # Term embeddings, only for texts that take part in an edge
+    model = SentenceTransformer(model_name)
+    terms_of = {}
+    for i in set(pi):
+        terms_of[("p", i)] = candidate_terms(patents["text"].iloc[i])
+    for j in set(si):
+        terms_of[("s", j)] = candidate_terms(startups["text"].iloc[j])
+    vocab = sorted(set().union(*terms_of.values())) if terms_of else []
+    T = model.encode(vocab, batch_size=128, normalize_embeddings=True) if vocab else np.empty((0, P.shape[1]))
+    index = {t: k for k, t in enumerate(vocab)}
+
+    rows = []
+    for i, j in zip(pi, si):
+        terms = sorted(terms_of[("p", i)] | terms_of[("s", j)])
+        V = T[[index[t] for t in terms]]
+        both = np.minimum(V @ P[i], V @ S[j])
+        top, seen = [], set()
+        for k in np.argsort(-both):
+            words = set(terms[k].split())
+            if words & seen:
+                continue  # avoid "cardiac" + "cardiac valve" + "valve"
+            top.append(terms[k])
+            seen |= words
+            if len(top) == args.top_terms:
+                break
+        rows.append({
+            "tech_id": patents["id"].iloc[i],
+            "tech_type": "patent",
+            "startup_id": startups["id"].iloc[j],
+            "score": round(float(sim[i, j]), 4),
+            "top_terms": "|".join(top),
+            "model": model_name,
+            "run_date": date.today().isoformat(),
+        })
+    edges = pd.DataFrame(rows, columns=["tech_id", "tech_type", "startup_id", "score", "top_terms", "model", "run_date"])
+    edges = edges.sort_values("score", ascending=False)
+    edges.to_csv(OUT, index=False)
+
+    flat = sim.ravel()
+    best_p, best_s = sim.max(axis=1), sim.max(axis=0)
+    q = np.quantile(flat, [0.5, 0.9, 0.99, 0.999])
+    print(f"patents x startups:        {sim.shape[0]} x {sim.shape[1]} = {flat.size} pairs")
+    print(f"score quantiles 50/90/99/99.9%: {' / '.join(f'{x:.3f}' for x in q)}   max {flat.max():.3f}")
+    print(f"edges >= {threshold}:              {len(edges)}")
+    print(f"patents with an edge:      {len(set(pi))} / {len(patents)}")
+    print(f"startups with an edge:     {len(set(si))} / {len(startups)}")
+    print("patents' best score:       " + "  ".join(
+        f">={t}: {(best_p >= t).sum()}" for t in (0.4, 0.5, 0.55, 0.6, 0.65, 0.7)))
+    print("startups' best score:      " + "  ".join(
+        f">={t}: {(best_s >= t).sum()}" for t in (0.4, 0.5, 0.55, 0.6, 0.65, 0.7)))
+    print(f"saved: {OUT}")
+
+
+if __name__ == "__main__":
+    main()

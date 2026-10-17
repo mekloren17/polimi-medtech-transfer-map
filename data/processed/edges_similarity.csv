@@ -1,0 +1,14 @@
+tech_id,tech_type,startup_id,score,top_terms,model,run_date
+WO2018050632A1,patent,04670440165,0.6649,innovative upper-limb|rehabilitation apparatus|upper limb|exoskeleton assistance|brace,sentence-transformers/paraphrase-multilingual-mpnet-base-v2,2026-10-17
+IT202400002722U1,patent,03017460183,0.6617,farmaci servizi|caregiver farmacie|somministrazione medicinali|dispenser intelligente|organizzare terapia,sentence-transformers/paraphrase-multilingual-mpnet-base-v2,2026-10-17
+US11051714B2,patent,04694270986,0.6525,wearable|sensor thoracic|sensori intelligenza|sensors|segnali corpo,sentence-transformers/paraphrase-multilingual-mpnet-base-v2,2026-10-17
+US20260053566A1,patent,14342480960,0.6435,calculating surgical|virtual cranial|processing preoperative|clinical images|virtualclone segmentation,sentence-transformers/paraphrase-multilingual-mpnet-base-v2,2026-10-17
+IT202400002722U1,patent,04420600985,0.6386,ambito medico|medicina distribuita|somministrazione medicinali|sistema telemedicina|paziente lotech,sentence-transformers/paraphrase-multilingual-mpnet-base-v2,2026-10-17
+IT202400002722U1,patent,13727970967,0.622,dispositivi medici|somministrazione medicinali|impiantabile trattamento|medtech|medico curante,sentence-transformers/paraphrase-multilingual-mpnet-base-v2,2026-10-17
+EP1515759A1,patent,10761250967,0.6206,implantable prostheses|prosthetic|prosthesis|osteointegrative interface|cementless amputation,sentence-transformers/paraphrase-multilingual-mpnet-base-v2,2026-10-17
+EP4804927A1,patent,10761250967,0.6205,auricle prosthesis|orthopaedic prosthetic|arthemidex human|cementless amputation|osseointegration double,sentence-transformers/paraphrase-multilingual-mpnet-base-v2,2026-10-17
+IT1318531B1,patent,14741390968,0.6157,trattamento capello|viene applicato|terapeutica|soggetti appoggiatiad|sviluppare,sentence-transformers/paraphrase-multilingual-mpnet-base-v2,2026-10-17
+US20260321158A1,patent,14342480960,0.6053,surgical simulator|preoperative planning|medical images|modelled vascular|anatomical,sentence-transformers/paraphrase-multilingual-mpnet-base-v2,2026-10-17
+IT202300016464A1,patent,04694270986,0.6034,armiband wearable|supporto indossabile|dispositivo|sensori|segnali corpo,sentence-transformers/paraphrase-multilingual-mpnet-base-v2,2026-10-17
+IT202400002722U1,patent,14741390968,0.6015,terapeutica rappresentano|trattamento topico|pratica clinica|somministrazione medicinali|medica,sentence-transformers/paraphrase-multilingual-mpnet-base-v2,2026-10-17
+IT202100021125A1,patent,13727970967,0.6013,connessa medico|curante trattamento|dispositivi medici|malattie linfatiche|diagnostico indossabile,sentence-transformers/paraphrase-multilingual-mpnet-base-v2,2026-10-17
