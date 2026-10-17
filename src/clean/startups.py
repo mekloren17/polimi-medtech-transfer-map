@@ -6,14 +6,18 @@ Filters, all set in config.yaml:
   2. medtech = ATECO class in `ateco_codes` OR a keyword in the text (name + description)
 
 The open-data list has no business description: only name, ATECO code and its division
-label. Descriptions are merged from data/raw/startups/descriptions.csv
-(columns: vat_number, description, description_source) when that file exists; until then
-the keyword filter can only look at company names.
+label. Descriptions come from:
+  - data/raw/startups/websites.jsonl (src/collect/websites.py): homepage meta description,
+    or og:description, or the first paragraphs of text;
+  - data/raw/startups/descriptions.csv (vat_number, description, description_source),
+    optional manual descriptions that take precedence.
+E-mail addresses and phone numbers are removed from descriptions.
 
 Usage:
     python src/clean/startups.py [--sample N]
 """
 import argparse
+import json
 import re
 from pathlib import Path
 
@@ -22,6 +26,12 @@ import yaml
 
 RAW_DIR = Path("data/raw/startups")
 DESCRIPTIONS = RAW_DIR / "descriptions.csv"
+WEBSITES = RAW_DIR / "websites.jsonl"
+MIN_META_CHARS = 80  # shorter meta descriptions get the page text appended
+
+EMAIL = re.compile(r"\S+@\S+\.\w+")
+# Italian-style phone numbers (landlines start with 0, mobiles with 3), optional +39
+PHONE = re.compile(r"(?:\+\d{2}[ .]?)?\b[03]\d[\d .\-/]{6,}\d")
 OUT = Path("data/processed/startups.csv")
 
 COLUMNS = {
@@ -52,6 +62,33 @@ def load_registry():
     return df, path
 
 
+def website_descriptions():
+    if not WEBSITES.exists():
+        return pd.DataFrame(columns=["vat_number", "description", "description_source"])
+    rows = []
+    for line in open(WEBSITES, encoding="utf-8"):
+        r = json.loads(line)
+        if r.get("status") != "ok":
+            continue
+        meta = r.get("meta_description") or r.get("og_description") or ""
+        text = r.get("text") or ""
+        if len(meta) >= MIN_META_CHARS:
+            desc, source = meta, "website_meta"
+        elif text:
+            desc, source = f"{meta} {text}".strip(), "website_text"
+        else:
+            desc, source = meta, "website_meta"
+        if desc:
+            rows.append({"vat_number": r["vat_number"], "description": desc, "description_source": source})
+    return pd.DataFrame(rows).drop_duplicates("vat_number", keep="last")
+
+
+def scrub(text):
+    text = EMAIL.sub("", text)
+    text = PHONE.sub("", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
 def keyword_pattern(keywords):
     # Each keyword must start a word; inner spaces match any whitespace.
     alternatives = [r"\s+".join(map(re.escape, k.lower().split())) for k in keywords]
@@ -76,13 +113,13 @@ def main():
     for col in ["founded", "registered_startup"]:
         df[col] = pd.to_datetime(df[col], format="%d/%m/%Y", errors="coerce").dt.date
 
+    desc = website_descriptions()
     if DESCRIPTIONS.exists():
-        desc = pd.read_csv(DESCRIPTIONS, dtype=str, keep_default_na=False)
-        df = df.merge(desc[["vat_number", "description", "description_source"]], on="vat_number", how="left")
-    else:
-        df["description"] = ""
-        df["description_source"] = ""
+        manual = pd.read_csv(DESCRIPTIONS, dtype=str, keep_default_na=False)
+        desc = pd.concat([desc[~desc["vat_number"].isin(manual["vat_number"])], manual])
+    df = df.merge(desc[["vat_number", "description", "description_source"]], on="vat_number", how="left")
     df[["description", "description_source"]] = df[["description", "description_source"]].fillna("")
+    df["description"] = df["description"].map(scrub)
 
     n_italy = len(df)
     df = df[df["region"].str.casefold() == cfg["region"].casefold()].copy()
@@ -125,7 +162,8 @@ def main():
         print(f"\nsample of {min(args.sample, len(out))}:")
         sample = out.sample(min(args.sample, len(out)), random_state=0)
         for _, r in sample.iterrows():
-            print(f"- [{r.match_reason}] {r['name']} | {r.ateco} {r.ateco_division} | {r.matched_keywords}")
+            print(f"- [{r.match_reason}: {r.matched_keywords or '-'}] {r['name']} ({r.ateco})")
+            print(f"    {r.description[:300] or '(no description)'}")
 
 
 if __name__ == "__main__":
