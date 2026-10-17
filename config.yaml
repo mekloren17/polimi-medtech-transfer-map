@@ -9,9 +9,10 @@ startups:
   region: Lombardia
   # ATECO 2007 classes kept regardless of description
   ateco_codes: ["32.50", "26.60"]
-  # Case-insensitive substrings searched in the business description.
-  # Italian and English, since descriptions mix both. Keep entries specific:
-  # generic words ("salute", "health", "benessere") let in too many unrelated companies.
+  # Case-insensitive word prefixes: each keyword must start a word ("stent" does not
+  # match "assistente"). Italian and English, since descriptions mix both. Keep entries
+  # specific: generic words ("salute", "health", "benessere", "impianti") let in too many
+  # unrelated companies.
   keywords:
     # devices and clinical practice
     - dispositivo medico
@@ -25,7 +26,9 @@ startups:
     - protesi
     - prosthe
     - ortesi
-    - impiant
+    - impiantabil
+    - impianto dentale
+    - impianti dentali
     - implant
     - catetere
     - catheter
@@ -51,7 +54,7 @@ startups:
     - patient
     - clinic
     - ospedal
-    - hospital
+    - hospitals
     - terapi
     - therap
     # digital health
