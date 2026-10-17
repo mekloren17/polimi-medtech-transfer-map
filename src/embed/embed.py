@@ -3,14 +3,16 @@
 Inputs:  data/processed/patents.csv  (text_for_embedding)
          data/processed/startups.csv (name + description; startups without a
          description are skipped: a company name alone says nothing about the technology)
-Outputs: data/processed/embeddings/patents.parquet
-         data/processed/embeddings/startups.parquet
+Outputs: data/processed/embeddings/<model>/patents.parquet
+         data/processed/embeddings/<model>/startups.parquet
+(<model> = last part of the model name, so several models can be compared side by side)
 Each row: id, text, model, run_date, embedding (L2-normalised float32 list).
 The embeddings are reproducible from the tables above and are not committed.
 
 Usage:
-    python src/embed/embed.py
+    python src/embed/embed.py [--model NAME]   # default: embedding.model in config.yaml
 """
+import argparse
 from datetime import date
 from pathlib import Path
 
@@ -20,7 +22,10 @@ import yaml
 from sentence_transformers import SentenceTransformer
 
 PROCESSED = Path("data/processed")
-OUT_DIR = PROCESSED / "embeddings"
+
+
+def embedding_dir(model_name):
+    return PROCESSED / "embeddings" / model_name.split("/")[-1]
 
 
 def load_texts():
@@ -46,22 +51,27 @@ def embed(model, df, model_name):
 
 
 def main():
-    model_name = yaml.safe_load(open("config.yaml", encoding="utf-8"))["embedding"]["model"]
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model", help="override embedding.model from config.yaml")
+    args = parser.parse_args()
+    model_name = args.model or yaml.safe_load(open("config.yaml", encoding="utf-8"))["embedding"]["model"]
+    out_dir = embedding_dir(model_name)
+
     patents, startups, n_startups = load_texts()
     model = SentenceTransformer(model_name)
     max_tokens = model.max_seq_length
 
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    out_dir.mkdir(parents=True, exist_ok=True)
     for label, df in [("patents", patents), ("startups", startups)]:
         out = embed(model, df, model_name)
-        out.to_parquet(OUT_DIR / f"{label}.parquet", index=False)
+        out.to_parquet(out_dir / f"{label}.parquet", index=False)
         n_tokens = [len(model.tokenizer.tokenize(t)) for t in df["text"]]
         truncated = sum(n > max_tokens for n in n_tokens)
         print(f"{label:9} embedded: {len(out):4}  dim: {len(out['embedding'].iloc[0])}  "
               f"truncated at {max_tokens} tokens: {truncated}")
     print(f"startups skipped (no description): {n_startups - len(startups)}")
     print(f"model: {model_name}")
-    print(f"saved: {OUT_DIR}/")
+    print(f"saved: {out_dir}/")
 
 
 if __name__ == "__main__":

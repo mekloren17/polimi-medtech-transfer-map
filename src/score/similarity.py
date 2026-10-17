@@ -21,7 +21,6 @@ import pandas as pd
 import yaml
 from sentence_transformers import SentenceTransformer
 
-EMB_DIR = Path("data/processed/embeddings")
 OUT = Path("data/processed/edges_similarity.csv")
 
 STOPWORDS = set("""
@@ -53,8 +52,8 @@ def candidate_terms(text):
     return set(unigrams) | set(bigrams)
 
 
-def load(name):
-    df = pd.read_parquet(EMB_DIR / f"{name}.parquet")
+def load(emb_dir, name):
+    df = pd.read_parquet(emb_dir / f"{name}.parquet")
     return df, np.vstack(df["embedding"].to_numpy())
 
 
@@ -65,11 +64,12 @@ def main():
 
     cfg = yaml.safe_load(open("config.yaml", encoding="utf-8"))
     threshold = cfg["similarity"]["threshold"]
-    patents, P = load("patents")
-    startups, S = load("startups")
-    model_name = patents["model"].iloc[0]
-    if model_name != cfg["embedding"]["model"] or startups["model"].iloc[0] != model_name:
-        raise SystemExit("Embeddings were built with a different model: rerun src/embed/embed.py")
+    model_name = cfg["embedding"]["model"]
+    emb_dir = Path("data/processed/embeddings") / model_name.split("/")[-1]
+    if not emb_dir.exists():
+        raise SystemExit(f"No embeddings in {emb_dir}: run src/embed/embed.py first")
+    patents, P = load(emb_dir, "patents")
+    startups, S = load(emb_dir, "startups")
 
     sim = P @ S.T  # vectors are L2-normalised
     pi, si = np.nonzero(sim >= threshold)
