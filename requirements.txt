@@ -7,3 +7,4 @@ scikit-learn>=1.5
 networkx>=3.3
 pyvis>=0.3
 tqdm>=4.66
+beautifulsoup4>=4.12
