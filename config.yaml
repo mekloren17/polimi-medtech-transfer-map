@@ -93,8 +93,12 @@ startups:
     - organ on chip
 
 embedding:
-  # Multilingual: startup descriptions are mostly Italian, patent abstracts mostly English
+  # Multilingual: startup descriptions are mostly Italian, patent abstracts mostly English.
+  # Compared with BAAI/bge-m3 on data/manual/calibration_pairs.csv: bge-m3 has no language
+  # bias but ranks the labelled pairs worse (AUC 0.73 vs 0.83), so this model is kept.
   model: sentence-transformers/paraphrase-multilingual-mpnet-base-v2
 
 similarity:
-  threshold: 0.60
+  # Best F1 on the calibration pairs (src/score/calibrate.py report): about 0.47 precision,
+  # 0.74 recall. Provisional: the labels are a draft still to be reviewed.
+  threshold: 0.55
