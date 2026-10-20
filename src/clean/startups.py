@@ -33,6 +33,7 @@ MIN_META_CHARS = 80  # shorter meta descriptions get the page text appended
 EMAIL = re.compile(r"\S+@\S+\.\w+")
 # Italian-style phone numbers (landlines start with 0, mobiles with 3), optional +39
 PHONE = re.compile(r"(?:\+\d{2}[ .]?)?\b[03]\d[\d .\-/]{6,}\d")
+SPINOFFS = Path("data/processed/spinoffs.csv")  # src/clean/spinoffs.py, for is_polimi_spinoff
 OUT = Path("data/processed/startups.csv")
 
 COLUMNS = {
@@ -137,7 +138,11 @@ def main():
         by_ateco.map({True: "ateco", False: ""}) + (by_ateco & by_keyword).map({True: "+", False: ""})
         + by_keyword.map({True: "keyword", False: ""})
     )
-    df["is_polimi_spinoff"] = pd.NA  # filled once the spinoffs table exists
+    if SPINOFFS.exists():
+        spinoff_vats = set(pd.read_csv(SPINOFFS, dtype=str, keep_default_na=False)["vat_number"]) - {""}
+        df["is_polimi_spinoff"] = df["vat_number"].isin(spinoff_vats)
+    else:
+        df["is_polimi_spinoff"] = pd.NA  # run src/clean/spinoffs.py first
     df["list_date"] = list_date
     out = df[by_ateco | by_keyword].sort_values("name")
     out = out[[
