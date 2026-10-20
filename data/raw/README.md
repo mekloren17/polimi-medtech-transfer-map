@@ -9,7 +9,11 @@ Recreate them as follows.
 | File | How to obtain |
 |---|---|
 | `espacenet_export.csv` | Espacenet advanced search, query `(pa = "politecnico di milano" OR pa = "milano politecnico") AND ipc any "A61B A61F A61L A61M A61N G16H"`, export results as CSV (117 results at the time of writing). |
-| `abstracts.json` | List of `{"family_id", "abstract", "lang"}` extracted manually from the Espacenet results page. Will be replaced by `src/collect/epo_ops.py` (EPO Open Patent Services) once the OPS account is active. |
+| `ops/family_<id>.json`, `ops_abstracts.json` | Run `python src/collect/epo_ops.py` (EPO Open Patent Services). Needs a free OPS account: put the app's Consumer Key and Secret in a `.env` file in the project root as `OPS_KEY=...` and `OPS_SECRET=...`. This is the main abstract source. |
+| `abstracts.json` | Fallback: list of `{"family_id", "abstract", "lang"}` extracted manually from the Espacenet results page (first version of the dataset). |
+
+Merge both into the patents table, OPS first:
+`python src/clean/merge_abstracts.py data/processed/patents.csv data/raw/ops_abstracts.json=epo_ops data/raw/abstracts.json=espacenet_page`
 
 Espacenet must not be scraped (anti-bot protection and terms of use).
 
