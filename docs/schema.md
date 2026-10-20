@@ -33,12 +33,20 @@ All processed tables live in `data/processed/` as CSV (or Parquet for embeddings
 ### `spinoffs`
 | Field | Type | Description |
 |---|---|---|
-| spinoff_id | str | Internal id |
-| name | str | |
-| vat_number | str | Join key with `startups` |
-| founded | date | |
-| department | str | Originating department |
-| description | str | |
+| spinoff_id | str | Slug of the Polimi TTO page |
+| name | str | Legal name |
+| vat_number | str | Join key with `startups`; empty if not in the innovative-startup registry |
+| vat_match | str | `website` or `name`: how the VAT number was found |
+| founded | int | Year of incorporation |
+| department | str | Originating department (not published by the TTO: empty for now) |
+| field | str | Field as stated by the TTO |
+| description | str | Activity, services and target market |
+| is_medtech | bool | Medtech keywords (config.yaml) found in the TTO text |
+| medtech_keywords | list[str] | |
+| website | str | |
+| evidence | str | TTO page URL |
+
+Only spin-offs still active and listed by the TTO are included (91 of 142 accredited).
 
 ### `startups`
 | Field | Type | Description |
@@ -61,7 +69,7 @@ Verified relations from sources.
 | source_type | str | patent / eu_project / spinoff / startup |
 | target_id | str | |
 | target_type | str | |
-| relation | str | e.g. `originated_from`, `same_department`, `participates_in` |
+| relation | str | `same_company` (spin-off is the startup), `co_applicant` (company applies for a Polimi patent); later e.g. `participates_in` |
 | evidence | str | Source URL or reference |
 
 ### `edges_similarity`
@@ -80,5 +88,12 @@ Computed relations.
 
 ## Derived views
 
+Built by `src/score/gaps.py`.
+
 - **`orphan_technologies`**: technologies with no `edges_known` to a spin-off/startup and max `score` < threshold.
-- **`researchless_startups`**: startups with at least one `score` ≥ threshold and no `edges_known` to Polimi.
+  Adds `best_score` / `best_startup_id` (closest startup even below threshold), `low_confidence`
+  (title only) and `industry_co_applicants` (company co-applicants: such a technology already
+  has an industrial partner and is orphan only with respect to startups).
+- **`researchless_startups`**: startups with at least one `score` ≥ threshold and no `edges_known` to Polimi
+  (not a spin-off, not a co-applicant). Adds match counts, best patent and `only_low_confidence`
+  (every match comes from a title-only patent).
