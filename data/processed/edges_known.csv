@@ -1,0 +1,6 @@
+source_id,source_type,target_id,target_type,relation,evidence
+pionirs,spinoff,11392240963,startup,same_company,https://www.polimi.it/en/research/technology-transfer/spin-off/pionirs
+vectorialis,spinoff,14677170962,startup,same_company,https://www.polimi.it/en/research/technology-transfer/spin-off/vectorialis
+US2020163585A1,patent,restech,spinoff,co_applicant,EPO applicants of US2020163585A1
+US10791961B2,patent,restech,spinoff,co_applicant,EPO applicants of US10791961B2
+US20260053566A1,patent,artiness,spinoff,co_applicant,EPO applicants of US20260053566A1
