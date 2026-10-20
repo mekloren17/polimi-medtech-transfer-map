@@ -8,6 +8,10 @@ are closest to BOTH texts (score = min of the two cosine similarities, computed 
 same multilingual model). They show what the match is about; they are an explanation aid,
 not the cause of the score.
 
+Edges whose patent has no abstract (text_source == "title" in patents.csv) are marked
+`low_confidence`: a short title, often in Italian, gives unreliable scores (Italian-Italian
+pairs score higher on average with this model).
+
 Usage:
     python src/score/similarity.py [--top-terms N]
 """
@@ -71,6 +75,8 @@ def main():
     patents, P = load(emb_dir, "patents")
     startups, S = load(emb_dir, "startups")
 
+    text_source = pd.read_csv("data/processed/patents.csv", dtype=str).set_index("patent_id")["text_source"]
+
     sim = P @ S.T  # vectors are L2-normalised
     pi, si = np.nonzero(sim >= threshold)
 
@@ -105,10 +111,15 @@ def main():
             "startup_id": startups["id"].iloc[j],
             "score": round(float(sim[i, j]), 4),
             "top_terms": "|".join(top),
+            "tech_text_source": text_source[patents["id"].iloc[i]],
+            "low_confidence": text_source[patents["id"].iloc[i]] == "title",
             "model": model_name,
             "run_date": date.today().isoformat(),
         })
-    edges = pd.DataFrame(rows, columns=["tech_id", "tech_type", "startup_id", "score", "top_terms", "model", "run_date"])
+    edges = pd.DataFrame(rows, columns=[
+        "tech_id", "tech_type", "startup_id", "score", "top_terms", "tech_text_source", "low_confidence",
+        "model", "run_date",
+    ])
     edges = edges.sort_values("score", ascending=False)
     edges.to_csv(OUT, index=False)
 
@@ -117,7 +128,7 @@ def main():
     q = np.quantile(flat, [0.5, 0.9, 0.99, 0.999])
     print(f"patents x startups:        {sim.shape[0]} x {sim.shape[1]} = {flat.size} pairs")
     print(f"score quantiles 50/90/99/99.9%: {' / '.join(f'{x:.3f}' for x in q)}   max {flat.max():.3f}")
-    print(f"edges >= {threshold}:              {len(edges)}")
+    print(f"edges >= {threshold}:             {len(edges)}  (low confidence, title only: {edges['low_confidence'].sum()})")
     print(f"patents with an edge:      {len(set(pi))} / {len(patents)}")
     print(f"startups with an edge:     {len(set(si))} / {len(startups)}")
     print("patents' best score:       " + "  ".join(

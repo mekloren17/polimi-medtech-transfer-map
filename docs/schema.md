@@ -73,6 +73,8 @@ Computed relations.
 | startup_id | str | vat_number |
 | score | float | Cosine similarity |
 | top_terms | list[str] | Terms explaining the match |
+| tech_text_source | str | `abstract` or `title`: text the technology was embedded from |
+| low_confidence | bool | True when only the title was available (short, often Italian: less reliable score) |
 | model | str | Embedding model name |
 | run_date | date | |
 
