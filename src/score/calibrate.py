@@ -16,6 +16,7 @@
    pairs precision / recall / F1 at each threshold plus the best-F1 threshold.
 """
 import argparse
+import json
 import re
 from pathlib import Path
 
@@ -24,6 +25,7 @@ import pandas as pd
 
 EMB_ROOT = Path("data/processed/embeddings")
 PAIRS = Path("data/manual/calibration_pairs.csv")
+REPORT = Path("data/processed/calibration_report.json")
 TOP_N = 40
 N_MIDDLE = 40
 ITALIAN = re.compile(r"\b(per|della|delle|degli|dei|che|il|una|sono|nella|sul|dispositivo|metodo)\b", re.I)
@@ -97,6 +99,7 @@ def report(models):
         return
     y = lab["label"].astype(int).to_numpy()
     print(f"\nlabelled pairs: {len(lab)}  (positive: {y.sum()})")
+    summary = {"labelled_pairs": len(lab), "positive": int(y.sum()), "models": {}}
     for m in models:
         p, s, sim = sims[m]
         pi = p.reset_index().set_index("id")["index"]
@@ -117,6 +120,11 @@ def report(models):
         print(res[res["predicted"] > 0].iloc[::3].to_string(index=False, float_format=lambda v: f"{v:.2f}"))
         print(f"   best F1 {best.f1:.2f} at threshold {best.threshold:.2f} "
               f"(precision {best.precision:.2f}, recall {best.recall:.2f})")
+        summary["models"][m] = {"auc": round(float(auc), 3), "best_threshold": float(best.threshold),
+                                "best_f1": round(float(best.f1), 3)}
+    # Read by src/build/site.py so the page quotes the comparison instead of hard-coded numbers
+    REPORT.write_text(json.dumps(summary, indent=1), encoding="utf-8")
+    print(f"\nsaved: {REPORT}")
 
 
 def main():
