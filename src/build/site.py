@@ -153,6 +153,7 @@ def build_data():
         "researchless": researchless["vat_number"].tolist(),
         "meta": {
             "threshold": cfg["similarity"]["threshold"],
+            "maxLinks": cfg["similarity"].get("max_links_per_patent"),
             "repoUrl": (cfg.get("site") or {}).get("repo_url") or "",
             "scopeRegions": cfg["startups"].get("regions") or [],
             "model": cfg["embedding"]["model"],
