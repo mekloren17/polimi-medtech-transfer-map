@@ -463,10 +463,11 @@ td small { display: block; color: var(--muted); font-size: 12px; }
       n.x = c.x + (rnd() - 0.5) * 80; n.y = c.y + (rnd() - 0.5) * 80;
     });
     const sim = d3.forceSimulation(nodes)
-      .force("link", d3.forceLink(simLinks).id(d => d.id).distance(l => l.kind === "known" ? 22 : 34).strength(l => l.kind === "known" ? 0.5 : 0.25))
+      // Similarity links only nudge: each startup stays in its macro-area and moves to the side facing its patents
+      .force("link", d3.forceLink(simLinks).id(d => d.id).distance(l => l.kind === "known" ? 22 : 34).strength(l => l.kind === "known" ? 0.3 : 0.02))
       .force("charge", d3.forceManyBody().strength(-14))
-      .force("x", d3.forceX(n => centers[home(n)].x).strength(n => n.type === "startup" && n.deg ? 0.01 : 0.16))
-      .force("y", d3.forceY(n => centers[home(n)].y).strength(n => n.type === "startup" && n.deg ? 0.01 : 0.16))
+      .force("x", d3.forceX(n => centers[home(n)].x).strength(0.16))
+      .force("y", d3.forceY(n => centers[home(n)].y).strength(0.16))
       .force("collide", d3.forceCollide(n => n.r + 2.5))
       .stop();
     for (let i = 0; i < 420; i++) sim.tick();
@@ -547,11 +548,11 @@ td small { display: block; color: var(--muted); font-size: 12px; }
       if (!members.length) return null;
       let x, y, name, stat;
       if (k.startsWith("AREA:")) {
-        const free = members.filter(n => !n.deg);
-        const pts = free.length ? free : members;
+        const pts = members;
         x = d3.mean(pts, n => n.x); y = d3.max(pts, n => n.y) + 28;
         name = `${k.slice(5)} startups`;
-        stat = `${members.length} · ${members.filter(n => n.researchless).length} research-less`;
+        const linked = members.filter(n => n.deg && !n.spinoff).length;
+        stat = `${members.length} · ${linked} linked · ${members.filter(n => n.researchless).length} research-less`;
       } else {
         x = d3.mean(members, n => n.x); y = d3.min(members, n => n.y) - 22;
         if (k === "SPINOFF") { name = "Polimi spin-offs"; stat = `${members.length} medtech or linked`; }
