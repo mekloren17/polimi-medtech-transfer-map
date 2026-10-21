@@ -253,6 +253,9 @@ td small { display: block; color: var(--muted); font-size: 12px; }
 .limits li { font-size: 16px; line-height: 1.55; color: #cfcbc3; padding-left: 18px; position: relative; max-width: 60ch; }
 .limits li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 6px; height: 6px; border-radius: 50%; background: var(--red); }
 .limits b { color: var(--fg); }
+.limits.checks li::before { background: var(--verified); }
+.sub-h { margin: 0 0 16px; font: 700 17px var(--font-body); color: var(--muted); }
+.limits + .sub-h { margin-top: 36px; }
 .report footer { color: var(--muted); font-size: 14px; border-top: 1px solid var(--line); padding-top: 24px; }
 
 @media (max-width: 700px) {
@@ -790,7 +793,7 @@ td small { display: block; color: var(--muted); font-size: 12px; }
         <span><i class="line" style="border-color:#f4f2ee;border-top-style:dashed"></i>Match from a title-only patent</span></div></div>
       <div class="menu-group"><h2>Sources</h2>
         <p class="note">Patents: Polimi applications in IPC A61B, A61F, A61L, A61M, A61N, G16H (Espacenet), abstracts from EPO Open Patent Services. Startups: InfoCamere register of innovative startups (list of ${esc(M.startupList)}), __SCOPE_PLACE__, ATECO 32.50 / 26.60 or medtech keywords; descriptions from each company's homepage, Italian texts machine-translated (Helsinki-NLP opus-mt-it-en). Spin-offs: Polimi Technology Transfer Office public list (${M.nSpinoffsListed} listed).</p>
-        <p class="note">Similarity: cosine between multilingual sentence embeddings (<span class="mono">${esc(M.model)}</span>), threshold ${M.threshold} calibrated on hand-labelled pairs. A signal, not proof of fit. Only organisations are shown. Built ${esc(M.built)}.</p>
+        <p class="note">Similarity: cosine between multilingual sentence embeddings (<span class="mono">${esc(M.model)}</span>), threshold ${M.threshold} calibrated on hand-labelled pairs (precision ${M.calPrecision ?? "–"}, recall ${M.calRecall ?? "–"}). Only organisations are shown. Built ${esc(M.built)}.</p>
       </div>`;
     menuBody.querySelectorAll("[data-view]").forEach(b => b.addEventListener("click", () => { setView(b.dataset.view); renderMenu(); }));
     menuBody.querySelectorAll("[data-tab]").forEach(b => b.addEventListener("click", () => { listTab = b.dataset.tab; renderMenu(); }));
@@ -863,7 +866,7 @@ td small { display: block; color: var(--muted); font-size: 12px; }
     { t: "Verified ties", p: `Green marks what public sources confirm: startups that are Polimi spin-offs, and companies that co-filed a Polimi patent. Only ${nKnown} such ties are visible in open data.`, f: () => { const s = new Set(); allLinks.filter(l => l.kind === "known").forEach(l => { s.add(l.source); s.add(l.target); }); return s; } },
     { t: `${DATA.researchless.length} research-less startups`, p: "Red rings mark startups close to a Polimi patent with no known tie to Polimi. Each one is a lead for the Technology Transfer Office to check.", f: () => new Set(DATA.researchless.map(v => "S:" + v)) },
     { t: `${DATA.orphans.length} orphan technologies`, p: `Darker blue dots are patents with no spin-off and no __SCOPE_ADJ__ startup within reach. ${DATA.nodes.filter(n => n.orphan && n.industry).length} of them already have an industrial co-applicant, so they are orphan only with respect to startups.`, f: () => new Set(DATA.orphans.map(p => "P:" + p)) },
-    { t: "What is missing", p: "Licences and informal collaborations are mostly not public, older companies are not in the startup register, and similarity is a signal, not proof. Treat every gap as a lead to check.", f: () => null },
+    { t: "What open data cannot show", p: "Licences and research contracts are not public, and the register covers startups up to five years old. A gap on this map means no tie in open records, among the companies the register covers.", f: () => null },
   ];
   let step = -1;
   const card = document.getElementById("tourCard");
@@ -896,7 +899,7 @@ td small { display: block; color: var(--muted); font-size: 12px; }
     [nKnown, "verified ties", 4],
     [DATA.researchless.length, "startups near Polimi research, no tie", 5],
     [DATA.orphans.length, "patents with no startup in reach", 6],
-    ["", "Limits of open data", 7],
+    ["", "What open data cannot show", 7],
   ];
   const track = document.getElementById("ticker");
   track.innerHTML = FACTS.map(([v, t, n]) => `<button data-step="${n}">${v !== "" ? `<b>${esc(v)}</b>` : ""}${esc(t)}</button>`).join("");
@@ -908,7 +911,6 @@ td small { display: block; color: var(--muted); font-size: 12px; }
   function renderReport() {
     const sims = allLinks.filter(l => l.kind === "similarity"), known = allLinks.filter(l => l.kind === "known");
     const matchedP = new Set(sims.map(l => l.source)), matchedS = new Set(sims.map(l => l.target));
-    const lowN = sims.filter(l => l.low).length;
     const rl = DATA.researchless.map(v => byId.get("S:" + v)).filter(Boolean);
     const rlRows = rl.map(n => ({ n, top: linksOf(n.id, allLinks).filter(l => l.kind === "similarity")[0] })).filter(r => r.top);
     // Startups with at least one match on a full abstract; the table shows that match
@@ -968,12 +970,20 @@ td small { display: block; color: var(--muted); font-size: 12px; }
       </section>
 
       <section aria-labelledby="hLimits">
-        <h3 id="hLimits">Read with care</h3>
+        <h3 id="hLimits">Validation and limits</h3>
+        <h4 class="sub-h">How the results were checked</h4>
+        <ul class="limits checks">
+          <li><b>Calibrated threshold.</b> ${N(M.calPairs || "–")} patent–startup pairs were labelled by hand, blind to the scores. At the chosen threshold the links have precision ${N(M.calPrecision ?? "–")} and recall ${N(M.calRecall ?? "–")} on that set.</li>
+          ${M.aucAlt ? `<li><b>Two models compared.</b> ${esc(M.altModel)} removes a language bias but ranked the labelled pairs worse (AUC ${N(M.aucAlt.toFixed(2))} against ${N(M.aucMain.toFixed(2))}), so the multilingual MPNet model was kept.</li>` : ""}
+          ${M.maxLinks ? `<li><b>Generic patents contained.</b> A broadly worded digital-health patent matched dozens of startups on shared vocabulary; each patent now keeps at most its ${N(M.maxLinks)} closest startups.</li>` : ""}
+          ${M.nGooglePatents ? `<li><b>No title-only matching.</b> The ${N(M.nGooglePatents)} patents without an abstract in the EPO data were completed from their Google Patents descriptions.</li>` : ""}
+          <li><b>Personal data removed.</b> Only organisations are published; descriptions naming founders were redacted.</li>
+        </ul>
+        <h4 class="sub-h">Scope of the study</h4>
         <ul class="limits">
-          <li><b>Similarity is a signal, not proof.</b> Two texts can be close in wording and far apart in technology; every match needs a human look.</li>
-          <li><b>Titles are weak evidence.</b> ${N(lowN)} of the ${N(sims.length)} matches start from a patent known only by its title; they are dashed on the map.</li>
-          <li><b>Only young companies are compared.</b> The register lists innovative startups for at most five years, and ${N(M.nStartups - M.nStartupsText)} of them published no description, so older firms and silent websites are missing.</li>
-          <li><b>Websites change.</b> Descriptions were read from homepages and some were machine-translated; a lapsed domain can describe a different business.</li>
+          <li><b>Innovative startups only.</b> The InfoCamere register lists them for at most five years; established companies are outside this map, and ${N(M.nStartups - M.nStartupsText)} startups without a website description could not be compared.</li>
+          <li><b>Public records only.</b> Licences and research contracts are not published, so "no visible tie" means no tie in open records.</li>
+          <li><b>Closeness, not commercial fit.</b> Similarity measures how close two descriptions are; the map ranks where a conversation is most likely to be useful.</li>
         </ul>
       </section>
 

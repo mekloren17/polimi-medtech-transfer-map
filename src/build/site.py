@@ -168,6 +168,8 @@ def build_data():
             "nTranslated": int(tr["kind"].eq("startup_description").sum()) if len(tr) else 0,
             "nByAteco": int(startups["match_reason"].str.startswith("ateco").sum()),
             **registry_counts(cfg),
+            **model_comparison(cfg),
+            "nGooglePatents": int((patents["abstract_source"] == "google_patents").sum()),
             **calibration(sim),
         },
     }
@@ -183,6 +185,20 @@ def registry_counts(cfg):
     regions = [r.casefold() for r in cfg["startups"].get("regions") or []]
     n_scope = int(region.str.casefold().isin(regions).sum()) if regions else len(raw)
     return {"nItaly": len(raw), "nRegion": n_scope}
+
+
+def model_comparison(cfg):
+    """AUC of the chosen model and of the best alternative, from src/score/calibrate.py report."""
+    path = PROCESSED / "calibration_report.json"
+    if not path.exists():
+        return {}
+    models = json.loads(path.read_text(encoding="utf-8"))["models"]
+    main = models.get(cfg["embedding"]["model"])
+    others = {k: v for k, v in models.items() if k != cfg["embedding"]["model"]}
+    if not main or not others:
+        return {}
+    alt_name, alt = max(others.items(), key=lambda kv: kv[1]["auc"])
+    return {"aucMain": main["auc"], "aucAlt": alt["auc"], "altModel": alt_name}
 
 
 def calibration(sim):
