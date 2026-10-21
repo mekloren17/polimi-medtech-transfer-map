@@ -1,11 +1,11 @@
 # Polimi MedTech Transfer Map
 
-**Which medical technologies developed at Politecnico di Milano are not (yet) becoming companies — and which Lombard startups could use them?**
+**Which medical technologies developed at Politecnico di Milano are not (yet) becoming companies — and which Italian startups could use them?**
 
-This project maps the technology-transfer pipeline between Politecnico di Milano research and the Lombard medtech startup ecosystem, using only open data. Its main output is not the existing connections but the **gaps**:
+This project maps the technology-transfer pipeline between Politecnico di Milano research and the Italian medtech startup ecosystem, using only open data. Its main output is not the existing connections but the **gaps**:
 
 - **Orphan technologies** — Polimi medtech patents and research lines with no spin-off and no thematically close startup.
-- **Research-less startups** — Lombard medtech startups with a closely related Polimi research group or patent they are not (visibly) connected to.
+- **Research-less startups** — Italian medtech startups with a closely related Polimi research group or patent they are not (visibly) connected to.
 
 Every link comes with a similarity score and the terms that justify it, so the analysis is transparent and reproducible.
 
@@ -23,7 +23,7 @@ Every link comes with a similarity score and the terms that justify it, so the a
 | EU research projects | CORDIS open data | Polimi participations, objectives, budgets |
 | Publications (optional) | OpenAIRE | To enrich research-group topics |
 | Spin-offs | Polimi Technology Transfer Office public lists | Manually curated where needed |
-| Startups | Registro delle startup innovative (startup.registroimprese.it) | Lombardy only |
+| Startups | Registro delle startup innovative (startup.registroimprese.it) | Whole of Italy; `startups.regions` in `config.yaml` narrows it (e.g. Lombardy) |
 
 ## MedTech scope
 
@@ -65,7 +65,8 @@ Thresholds and model are set in `config.yaml` and documented in every output.
 
 ## Roadmap
 
-- [ ] v0.1 — Polimi medtech patents + Lombard startups, similarity scoring, orphan list (CSV)
+- [x] v0.1 — Polimi medtech patents + Lombard startups, similarity scoring, orphan list (CSV)
+- [ ] v0.1.1 — startups extended to the whole of Italy, grouped by macro-area
 - [ ] v0.2 — CORDIS projects and spin-offs added; static site with graph
 - [ ] v0.3 — Obsidian vault generation; methodology page
 - [ ] v1.0 — other universities and IRCCS; other verticals

@@ -53,7 +53,9 @@ Only spin-offs still active and listed by the TTO are included (91 of 142 accred
 |---|---|---|
 | vat_number | str | Primary key |
 | name | str | |
-| municipality | str | Lombardy only |
+| municipality | str | |
+| region | str | As in the register; scope set by `startups.regions` |
+| macro_area | str | ISTAT macro-area: North-West, North-East, Centre, South, Islands |
 | ateco | str | |
 | founded | date | |
 | description | str | Used for embeddings |
