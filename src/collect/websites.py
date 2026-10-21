@@ -23,6 +23,7 @@ from urllib.robotparser import RobotFileParser
 
 import pandas as pd
 import requests
+import urllib3
 import yaml
 from bs4 import BeautifulSoup
 
@@ -125,9 +126,18 @@ def fetch(vat_number, website, web_cfg):
                 return rec | {"status": "not_html"}
             # Pass bytes: BeautifulSoup detects the charset from the page itself
             return rec | {"status": "ok"} | extract(body, web_cfg["max_text_chars"])
-        except requests.RequestException as exc:
+        except (requests.RequestException, urllib3.exceptions.HTTPError, ValueError) as exc:
+            # A broken site (bad gzip, invalid redirect, odd encoding) must not stop the run
             last_error = type(exc).__name__
     return rec | {"url": url, "status": "unreachable", "error": last_error}
+
+
+def safe_fetch(vat_number, website, web_cfg):
+    """One unexpected failure (a parser error, a malformed page) is recorded for that site only."""
+    try:
+        return fetch(vat_number, website, web_cfg)
+    except Exception as exc:  # noqa: BLE001 - recorded in the output, not hidden
+        return {"vat_number": vat_number, "website": website, "status": "error", "error": type(exc).__name__}
 
 
 def main():
@@ -149,7 +159,7 @@ def main():
 
     mode = "w" if args.refresh else "a"
     with open(OUT, mode, encoding="utf-8") as f, ThreadPoolExecutor(cfg["websites"]["workers"]) as pool:
-        futures = [pool.submit(fetch, r.vat_number, r.website, cfg["websites"]) for r in todo.itertuples()]
+        futures = [pool.submit(safe_fetch, r.vat_number, r.website, cfg["websites"]) for r in todo.itertuples()]
         for i, fut in enumerate(as_completed(futures), 1):
             rec = fut.result()
             done[rec["vat_number"]] = rec
