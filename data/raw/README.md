@@ -12,8 +12,10 @@ Recreate them as follows.
 | `ops/family_<id>.json`, `ops_abstracts.json` | Run `python src/collect/epo_ops.py` (EPO Open Patent Services). Needs a free OPS account: put the app's Consumer Key and Secret in a `.env` file in the project root as `OPS_KEY=...` and `OPS_SECRET=...`. This is the main abstract source. |
 | `abstracts.json` | Fallback: list of `{"family_id", "abstract", "lang"}` extracted manually from the Espacenet results page (first version of the dataset). |
 
-Merge both into the patents table, OPS first:
-`python src/clean/merge_abstracts.py data/processed/patents.csv data/raw/ops_abstracts.json=epo_ops data/raw/abstracts.json=espacenet_page`
+| `google_patents/`, `google_patents_abstracts.json` | Run `python src/collect/google_patents.py`: for patents with no abstract in OPS, the description from Google Patents (robots.txt allows `/patent/`), translated to English. |
+
+Merge them into the patents table, OPS first:
+`python src/clean/merge_abstracts.py data/processed/patents.csv data/raw/ops_abstracts.json=epo_ops data/raw/google_patents_abstracts.json=google_patents data/raw/abstracts.json=espacenet_page`
 
 Espacenet must not be scraped (anti-bot protection and terms of use).
 
