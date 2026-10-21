@@ -30,9 +30,8 @@
 ::selection { background: var(--startup); color: var(--ink); }
 * { scrollbar-color: #3a3a41 transparent; scrollbar-width: thin; }
 input { caret-color: var(--startup); }
-html, body { height: 100%; }
 body {
-  margin: 0; background: var(--ink); color: var(--fg); overflow: hidden;
+  margin: 0; background: var(--ink); color: var(--fg); overflow-x: hidden;
   font: 15px/1.5 var(--font-body);
 }
 button { font: inherit; color: inherit; }
@@ -42,14 +41,25 @@ a { color: inherit; }
 .caps { font: 600 12px var(--font-body); font-stretch: 112%; text-transform: uppercase; letter-spacing: 0.08em; }
 
 /* Sky */
-#sky { position: fixed; inset: 0; background: var(--ink); }
-#stars { position: fixed; inset: 0; width: 100%; height: 100%; }
-#map { position: fixed; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+.stage { position: relative; height: 100vh; height: 100dvh; min-height: 520px; overflow: hidden; }
+#sky { position: absolute; inset: 0; background: var(--ink); }
+#stars { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* pan-y: a vertical swipe scrolls the page to the findings; pinch and horizontal drag move the map */
+#map { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: pan-y; cursor: grab; }
+.graticule line, .graticule circle { fill: none; stroke: rgba(244, 242, 238, 0.06); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.graticule .orbit { stroke: rgba(244, 242, 238, 0.16); stroke-dasharray: 2 6; }
+.graticule text { font: 400 10px var(--font-mono); fill: rgba(244, 242, 238, 0.28); text-anchor: middle; }
+.zoom-hint {
+  position: absolute; z-index: 21; left: 50%; top: 50%; transform: translate(-50%, -50%); pointer-events: none;
+  background: rgba(20, 20, 22, 0.92); border: 1px solid var(--line); border-radius: 999px; padding: 10px 18px; font-weight: 600;
+  opacity: 0; transition: opacity 0.2s ease-out;
+}
+.zoom-hint.show { opacity: 1; }
 #map:active { cursor: grabbing; }
 
 /* Top chrome */
 .top {
-  position: fixed; inset: 0 0 auto; z-index: 20; display: grid; grid-template-columns: 48px minmax(0, 1fr) 48px; align-items: center; gap: 12px;
+  position: absolute; inset: 0 0 auto; z-index: 20; display: grid; grid-template-columns: 48px minmax(0, 1fr) 48px; align-items: center; gap: 12px;
   padding-top: calc(16px + env(safe-area-inset-top, 0px)); padding-bottom: 18px;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
   pointer-events: none; background: linear-gradient(var(--ink) 0%, rgba(11, 11, 12, 0) 100%);
@@ -67,7 +77,7 @@ h1.brand {
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;
 }
 h1.brand small { display: block; font: 500 12px var(--font-body); font-stretch: 100%; letter-spacing: 0.04em; text-transform: none; color: var(--muted); margin-top: 8px; }
-.crumbs { position: fixed; z-index: 19; left: 50%; transform: translateX(-50%); top: calc(96px + env(safe-area-inset-top, 0px)); display: flex; gap: 8px; max-width: calc(100% - 32px); }
+.crumbs { position: absolute; z-index: 19; left: 50%; transform: translateX(-50%); top: calc(96px + env(safe-area-inset-top, 0px)); display: flex; gap: 8px; max-width: calc(100% - 32px); }
 .pill {
   display: inline-flex; align-items: center; gap: 6px;
   border: 1px solid var(--line); background: rgba(20, 20, 22, 0.85); border-radius: 999px; padding: 6px 14px;
@@ -88,19 +98,8 @@ h1.brand small { display: block; font: 500 12px var(--font-body); font-stretch: 
 .reticle path { fill: none; stroke: var(--fg); stroke-width: 1.6; }
 
 /* Bottom chrome */
-.view-toggle {
-  position: fixed; z-index: 18; left: 50%; transform: translateX(-50%);
-  bottom: calc(86px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 4px; padding: 4px;
-  border: 1px solid var(--line); border-radius: 999px; background: rgba(14, 14, 16, 0.9);
-}
-.view-toggle button {
-  border: 0; background: transparent; border-radius: 999px; padding: 8px 18px; cursor: pointer;
-  font: 600 13px var(--font-body); display: inline-flex; gap: 8px; align-items: center;
-}
-.view-toggle button[aria-checked="true"] { background: var(--paper); color: var(--ink); }
-.view-toggle button:focus-visible { outline: 2px solid var(--fg); outline-offset: 1px; }
 .tourbar {
-  position: fixed; z-index: 18; bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  position: absolute; z-index: 18; bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
   display: flex; align-items: center; gap: 12px; border: 1px solid var(--line); border-radius: 999px; background: rgba(14, 14, 16, 0.92); padding: 6px; overflow: hidden;
 }
@@ -114,6 +113,9 @@ h1.brand small { display: block; font: 500 12px var(--font-body); font-stretch: 
 .ticker button { border: 0; background: transparent; cursor: pointer; padding: 6px 10px; border-radius: 999px; font-size: 14px; color: var(--muted); }
 .ticker button b { color: var(--fg); font: 400 14px var(--font-mono); margin-right: 6px; }
 .ticker button:hover, .ticker button:focus-visible { color: var(--fg); background: var(--ink-3); outline: none; }
+.to-report { flex: none; display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); text-decoration: none; font-weight: 600; font-size: 14px; }
+.to-report:hover, .to-report:focus-visible { border-color: var(--fg); outline: none; }
+.to-report svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; }
 
 /* Sheets */
 .sheet {
@@ -209,9 +211,9 @@ td small { display: block; color: var(--muted); font-size: 12px; }
 .result:hover, .result.active, .result:focus-visible { background: var(--ink-3); border-color: var(--line); outline: none; }
 .result span:last-child { color: var(--muted); font-size: 13px; margin-left: auto; white-space: nowrap; }
 
-/* Tour card and agent view */
+/* Tour card */
 .tour-card {
-  position: fixed; z-index: 25; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(140px + env(safe-area-inset-bottom, 0px));
+  position: absolute; z-index: 25; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(92px + env(safe-area-inset-bottom, 0px));
   width: min(420px, calc(100% - 32px)); background: var(--ink-2); border: 1px solid var(--line); border-radius: 16px; padding: 18px; display: grid; gap: 10px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
 }
@@ -219,8 +221,40 @@ td small { display: block; color: var(--muted); font-size: 12px; }
 .tour-card p { margin: 0; color: #cfcbc3; }
 .tour-nav { display: flex; align-items: center; gap: 10px; }
 .tour-nav .count { font: 400 13px var(--font-mono); color: var(--muted); margin: 0 auto; }
-.agent { display: grid; gap: 12px; }
-.agent pre { margin: 0; white-space: pre-wrap; word-break: break-word; font: 400 12.5px/1.55 var(--font-mono); color: #d9d5cd; background: var(--ink-3); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+
+/* Method and findings: a reading section under the map */
+.report { position: relative; background: var(--ink); border-top: 1px solid var(--line);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 88px calc(96px + env(safe-area-inset-bottom, 0px)); }
+.report-inner { max-width: 1120px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 72px; }
+.report-inner > *, .steps li > *, .finding > * { min-width: 0; }
+.report h2 { margin: 0; font: 850 clamp(30px, 5vw, 56px)/1 var(--font-display); font-stretch: 125%; text-transform: uppercase; letter-spacing: 0.01em; text-wrap: balance; }
+.report .intro { margin: 20px 0 0; max-width: 64ch; font-size: 20px; line-height: 1.5; color: #d9d5cd; text-wrap: pretty; }
+.report h3 { margin: 0 0 24px; font: 800 26px/1.15 var(--font-display); font-stretch: 112%; text-wrap: balance; }
+.report p { margin: 0; max-width: 68ch; font-size: 17px; line-height: 1.6; color: #cfcbc3; text-wrap: pretty; }
+.report p + p { margin-top: 14px; }
+.report .num { font-family: var(--font-mono); color: var(--fg); font-variant-numeric: tabular-nums; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px 48px; counter-reset: step; }
+.steps li { counter-increment: step; display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 4px 12px; align-content: start; }
+.steps li::before { content: counter(step); grid-row: span 2; font: 400 14px var(--font-mono); color: var(--muted); padding-top: 4px; }
+.steps h4 { margin: 0; font: 700 18px var(--font-body); }
+.steps p { font-size: 16px; }
+.finding { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 24px 56px; align-items: start; padding-top: 32px; border-top: 1px solid var(--line); }
+.finding + .finding { margin-top: 40px; }
+.finding h4 { margin: 0 0 12px; font: 700 20px/1.25 var(--font-body); text-wrap: balance; }
+.finding .side { min-width: 0; }
+.chart svg { display: block; width: 100%; height: auto; }
+.chart .legend-row { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 12px; font-size: 13px; color: var(--muted); }
+.chart .legend-row span { display: inline-flex; align-items: center; gap: 8px; }
+.chart .legend-row i { width: 12px; height: 12px; border-radius: 3px; }
+.leads td:first-child { font-weight: 650; }
+.leads td small { margin-top: 2px; }
+.limits { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 48px; }
+.limits li { font-size: 16px; line-height: 1.55; color: #cfcbc3; padding-left: 18px; position: relative; max-width: 60ch; }
+.limits li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 6px; height: 6px; border-radius: 50%; background: var(--red); }
+.limits b { color: var(--fg); }
+.report pre { margin: 16px 0 0; overflow-x: auto; background: var(--ink-2); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; font: 400 13px/1.7 var(--font-mono); color: #d9d5cd; }
+.report footer { color: var(--muted); font-size: 14px; border-top: 1px solid var(--line); padding-top: 24px; }
 
 @media (max-width: 700px) {
   .sheet { top: auto; height: 78%; width: 100%; border-left: 0; border-top: 1px solid var(--line); border-radius: 18px 18px 0 0; transform: translateY(105%); }
@@ -228,9 +262,14 @@ td small { display: block; color: var(--muted); font-size: 12px; }
   .drawer { height: 100%; top: 0; bottom: 0; border-radius: 0; transform: translateX(-105%); }
   .entity-top { grid-template-columns: minmax(0, 1fr) 96px; }
   .crumbs { top: calc(84px + env(safe-area-inset-top, 0px)); }
-  .view-toggle { bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
-  .view-toggle button { padding: 7px 12px; }
-  .tour-card { bottom: calc(132px + env(safe-area-inset-bottom, 0px)); }
+  .tour-card { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+  .to-report span { display: none; }
+}
+@media (max-width: 860px) {
+  .steps, .limits { grid-template-columns: minmax(0, 1fr); }
+  .finding { grid-template-columns: minmax(0, 1fr); }
+  .report { padding-block: 64px calc(72px + env(safe-area-inset-bottom, 0px)); }
+  .report-inner { gap: 56px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .sheet { transition: none; }
@@ -238,6 +277,7 @@ td small { display: block; color: var(--muted); font-size: 12px; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <!--/HEAD-->
+<section class="stage" aria-label="Transfer map">
 <div id="sky"></div>
 <canvas id="stars" aria-hidden="true"></canvas>
 <svg id="map" role="application" aria-label="Map of Polimi medtech patents, Lombard startups and Polimi spin-offs. Use the search or the lists in the menu to reach every item by keyboard."></svg>
@@ -257,20 +297,21 @@ td small { display: block; color: var(--muted); font-size: 12px; }
   <button class="pill light" id="crumbSel" hidden></button>
 </nav>
 
-<div class="view-toggle" role="radiogroup" aria-label="View">
-  <button role="radio" aria-checked="true" id="humanBtn">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6"/></svg>Human</button>
-  <button role="radio" aria-checked="false" id="agentBtn">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l5 5-5 5M12 18h8"/></svg>Agent</button>
-</div>
-
 <div class="tourbar">
   <button class="tour-start" id="tourBtn" aria-label="Start the data tour">
     <span class="play"><svg viewBox="0 0 12 12"><path d="M3 1.5v9l7.5-4.5z"/></svg></span>
     <span id="tourLabel" style="font-weight:650">Data tour</span>
   </button>
   <div class="ticker" aria-label="Key facts: each opens its step of the tour"><div class="ticker-track" id="ticker"></div></div>
+  <a class="to-report" href="#report"><span>Method and findings</span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1.5v9M2 6.5l4 4 4-4"/></svg></a>
 </div>
+<div class="tour-card" id="tourCard" hidden aria-live="polite"></div>
+<div class="zoom-hint" id="zoomHint" aria-hidden="true">Hold Ctrl (⌘ on Mac) and scroll to zoom</div>
+</section>
+
+<section class="report" id="report" aria-labelledby="reportTitle">
+  <div class="report-inner" id="reportBody"></div>
+</section>
 
 <aside class="sheet" id="sheet" aria-labelledby="sheetKind" aria-hidden="true">
   <div class="sheet-head">
@@ -296,8 +337,6 @@ td small { display: block; color: var(--muted); font-size: 12px; }
   </div>
 </div>
 
-<div class="tour-card" id="tourCard" hidden aria-live="polite"></div>
-
 <script id="data" type="application/json">__DATA__</script>
 <script>
 (function () {
@@ -313,7 +352,7 @@ td small { display: block; color: var(--muted); font-size: 12px; }
     A61B: "Diagnosis & surgery", A61M: "Drug delivery & extracorporeal", A61F: "Prostheses & implants",
     A61L: "Biomaterials", A61N: "Electro & radiation therapy", G16H: "Health informatics",
   };
-  const state = { min: M.threshold, hideLow: false, view: "all", selected: null, agent: false, highlight: null };
+  const state = { min: M.threshold, hideLow: false, view: "all", selected: null, highlight: null };
 
   // ---------- links ----------
   const allLinks = DATA.links;
@@ -328,7 +367,7 @@ td small { display: block; color: var(--muted); font-size: 12px; }
   // ---------- stars ----------
   const stars = document.getElementById("stars");
   function drawStars() {
-    const dpr = window.devicePixelRatio || 1, w = innerWidth, h = innerHeight;
+    const dpr = window.devicePixelRatio || 1, w = stage.clientWidth, h = stage.clientHeight;
     stars.width = w * dpr; stars.height = h * dpr;
     const c = stars.getContext("2d"); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, w, h);
     let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
@@ -347,18 +386,29 @@ td small { display: block; color: var(--muted); font-size: 12px; }
 
   // ---------- layout ----------
   const svg = d3.select("#map");
+  const stage = document.querySelector(".stage");
   const world = svg.append("g");
+  const chartLayer = world.append("g").attr("class", "graticule").attr("aria-hidden", "true");
   const linkLayer = world.append("g");
   const labelLayer = world.append("g");
   const nodeLayer = world.append("g");
   const reticle = world.append("g").attr("class", "reticle").attr("opacity", 0);
   reticle.append("circle").attr("r", 26);
   reticle.append("path").attr("d", "M-11,-5 v-6 h6 M5,-11 h6 v6 M11,5 v6 h-6 M-5,11 h-6 v-6");
-  const zoom = d3.zoom().scaleExtent([0.4, 6]).on("zoom", e => { world.attr("transform", e.transform); updateLabels(e.transform.k); });
+  // The page scrolls on to the findings, so the wheel zooms only with Ctrl/⌘ (trackpad pinch sends Ctrl too)
+  const zoom = d3.zoom().scaleExtent([0.4, 6])
+    .filter(e => e.type === "wheel" ? (e.ctrlKey || e.metaKey) : !e.button)
+    .on("zoom", e => { world.attr("transform", e.transform); updateLabels(e.transform.k); });
+  const hint = document.getElementById("zoomHint");
+  let hintTimer;
+  svg.on("wheel.hint", e => {
+    if (e.ctrlKey || e.metaKey) return;
+    hint.classList.add("show"); clearTimeout(hintTimer); hintTimer = setTimeout(() => hint.classList.remove("show"), 1400);
+  });
   svg.call(zoom).on("dblclick.zoom", null);
   svg.on("click", e => { if (e.target === svg.node()) select(null); });
 
-  let W = innerWidth, H = innerHeight, home_t = d3.zoomIdentity;
+  let W = 0, H = 0, home_t = d3.zoomIdentity;
   const centers = {};
   const nodes = DATA.nodes.map(n => ({ ...n }));
   const nodeById = new Map(nodes.map(n => [n.id, n]));
@@ -373,7 +423,7 @@ td small { display: block; color: var(--muted); font-size: 12px; }
   }
 
   function layout() {
-    W = innerWidth; H = innerHeight;
+    W = stage.clientWidth; H = stage.clientHeight;
     const cx = W / 2, cy = H / 2, rx = Math.max(200, Math.min(W * 0.32, 500)), ry = Math.max(170, Math.min(H * 0.26, 290));
     const fams = Object.keys(FAMILIES);
     fams.forEach((f, i) => {
@@ -382,6 +432,7 @@ td small { display: block; color: var(--muted); font-size: 12px; }
     });
     centers.STARTUP = { x: cx, y: cy + 10 };
     centers.SPINOFF = { x: cx + rx * 1.1, y: cy - ry * 1.05 };
+    drawGraticule(cx, cy, rx, ry);
     nodes.forEach(n => {
       n.deg = degree.get(n.id) || 0;
       n.r = n.type === "patent" ? 4 + Math.min(n.deg, 4) * 1.2 : n.type === "spinoff" ? 5 : 3.5 + Math.min(n.deg, 4) * 1.4;
@@ -404,6 +455,26 @@ td small { display: block; color: var(--muted); font-size: 12px; }
     const y0 = d3.min(nodes, n => n.y) - 40, y1 = d3.max(nodes, n => n.y) + 40;
     const top = 120, bottom = 150, k = Math.min(1, (W - 32) / (x1 - x0), (H - top - bottom) / (y1 - y0));
     home_t = d3.zoomIdentity.translate(W / 2, top + (H - top - bottom) / 2).scale(k).translate(-(x0 + x1) / 2, -(y0 + y1) / 2);
+  }
+
+  // Star-chart reticle: rings and hour lines around the map centre; the dashed
+  // ellipse is the orbit on which the six technology families are placed.
+  function drawGraticule(cx, cy, rx, ry) {
+    chartLayer.selectAll("*").remove();
+    const R = Math.max(rx, ry) * 2.2, step = 70;
+    for (let r = step; r <= R; r += step) chartLayer.append("circle").attr("cx", cx).attr("cy", cy).attr("r", r);
+    for (let a = 0; a < 360; a += 15) {
+      const t = a * Math.PI / 180;
+      chartLayer.append("line").attr("x1", cx + step * Math.cos(t)).attr("y1", cy + step * Math.sin(t))
+        .attr("x2", cx + R * Math.cos(t)).attr("y2", cy + R * Math.sin(t));
+    }
+    chartLayer.append("ellipse").attr("class", "orbit").attr("cx", cx).attr("cy", cy).attr("rx", rx).attr("ry", ry)
+      .attr("fill", "none").attr("stroke", "rgba(244,242,238,0.16)").attr("stroke-dasharray", "2 6").attr("vector-effect", "non-scaling-stroke");
+    const lr = Math.floor(R * 0.72 / step) * step;
+    for (let h = 0; h < 24; h += 2) {
+      const t = (h / 24) * 2 * Math.PI - Math.PI / 2;
+      chartLayer.append("text").attr("x", cx + lr * Math.cos(t)).attr("y", cy + lr * Math.sin(t) + 3).text(`${h}h`);
+    }
   }
 
   // ---------- render ----------
@@ -540,6 +611,7 @@ td small { display: block; color: var(--muted); font-size: 12px; }
 
   function select(id, opts = {}) {
     state.selected = id && byId.has(id) ? id : null;
+    if (state.selected && stage.getBoundingClientRect().top < -40) stage.scrollIntoView({ behavior: reduced ? "auto" : "smooth" });
     if (state.selected) {
       stopTour(false);
       openSheet();
@@ -548,8 +620,7 @@ td small { display: block; color: var(--muted); font-size: 12px; }
       try { history.replaceState(null, "", "#" + token(state.selected)); } catch (e) {}
       if (!opts.noZoom) zoomTo(neighbourhood(state.selected), 90);
     } else {
-      if (!(state.agent && !opts.keepSheet)) closeSheet();
-      if (state.agent && !opts.keepSheet) setAgent(true);
+      closeSheet();
       crumbSel.hidden = true;
       try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
     }
@@ -558,7 +629,7 @@ td small { display: block; color: var(--muted); font-size: 12px; }
 
   function openSheet() { sheet.classList.add("open"); sheet.setAttribute("aria-hidden", "false"); }
   function closeSheet() { sheet.classList.remove("open"); sheet.setAttribute("aria-hidden", "true"); }
-  document.getElementById("sheetClose").addEventListener("click", () => { if (state.agent && !state.selected) setAgent(false); else select(null, { keepSheet: false }); closeSheet(); });
+  document.getElementById("sheetClose").addEventListener("click", () => select(null));
   document.getElementById("crumbMap").addEventListener("click", () => { state.highlight = null; state.view = "all"; select(null); resetZoom(); });
 
   const KIND = { patent: "Polimi patent", startup: "Startup", spinoff: "Polimi spin-off" };
@@ -608,7 +679,6 @@ td small { display: block; color: var(--muted); font-size: 12px; }
     const n = byId.get(id), L = linksOf(id);
     const [stamp, stampCls] = status(n);
     sheetKind.innerHTML = `<i class="dotmark" style="background:${COLORS[n.type]}"></i>${esc(KIND[n.type])}`;
-    if (state.agent) { sheetBody.innerHTML = agentView(n); bindAgent(); return; }
     const facts = [];
     let links = "";
     if (n.type === "patent") {
@@ -656,56 +726,6 @@ td small { display: block; color: var(--muted); font-size: 12px; }
     return `<button class="link-row" data-go="${esc(other.id)}"><span class="who">${esc(trim(other.label, 70))}</span><span class="score">${fmt(l.score)}</span>
       <span class="meter"><i style="width:${w}%"></i></span><span class="why">${esc(l.terms.join(" · "))}${l.low ? " · title-only patent" : ""}</span></button>`;
   }
-
-  // ---------- agent view ----------
-  function entityJSON(n) {
-    const L = linksOf(n.id).map(l => {
-      const o = byId.get(l.source === n.id ? l.target : l.source);
-      return l.kind === "known" ? { with: o.label, id: o.ref, type: o.type, relation: l.relation, evidence: l.evidence }
-        : { with: o.label, id: o.ref, type: o.type, similarity: l.score, title_only_patent: l.low, terms: l.terms };
-    });
-    const base = { type: n.type, id: n.ref, name: n.label, summary: tldr(n) };
-    if (n.type === "patent") Object.assign(base, { priority_year: n.priority, ipc: n.ipcAll.split(" · "), applicants: n.applicants.split(" · "), orphan: n.orphan, industrial_co_applicants: n.industry || null, abstract: n.text || null });
-    if (n.type === "startup") Object.assign(base, { legal_name: n.legal, municipality: n.place, sector_nace: n.sector, website: n.website || null, polimi_spinoff: n.spinoff, research_less: n.researchless, description_en: n.text || null, machine_translated: !!n.mt });
-    if (n.type === "spinoff") Object.assign(base, { legal_name: n.legal, founded: n.founded, website: n.website || null, source: n.evidence, description: n.text || null });
-    base.links = L;
-    return base;
-  }
-  function overviewJSON() {
-    return {
-      dataset: "Polimi MedTech Transfer Map", built: M.built, model: M.model, threshold: M.threshold,
-      counts: { patents: M.nPatents, startups: M.nStartups, startups_with_description: M.nStartupsText, similarity_links: allLinks.filter(l => l.kind === "similarity").length, known_links: allLinks.filter(l => l.kind === "known").length, orphan_technologies: DATA.orphans.length, research_less_startups: DATA.researchless.length },
-      research_less_startups: DATA.researchless.map(v => byId.get("S:" + v)).filter(Boolean).map(n => {
-        const top = linksOf(n.id, allLinks).filter(l => l.kind === "similarity")[0];
-        return { name: n.label, tax_code: n.ref, best_match: top ? { patent: top.source.slice(2), score: top.score, title_only_patent: top.low } : null };
-      }),
-      orphan_technologies: DATA.orphans.map(p => byId.get("P:" + p)).filter(Boolean).map(n => ({ patent: n.ref, title: n.label, family: n.group, best_score: n.best, industrial_partner: !!n.industry })),
-      caveats: ["Similarity is a signal, not proof of fit.", "Licences and informal collaborations are mostly not public.", "Only organisations are listed, never inventors or founders."],
-    };
-  }
-  function agentView(n) {
-    const json = JSON.stringify(n ? entityJSON(n) : overviewJSON(), null, 2);
-    return `<div class="agent"><p class="note">Plain data for language models and scripts: ${n ? "this entity and its links" : "the whole map in summary"}.</p>
-      <div class="actions"><button class="btn" id="copyJson">Copy JSON</button></div><pre id="agentPre">${esc(json)}</pre></div>`;
-  }
-  function bindAgent() {
-    const b = document.getElementById("copyJson"); if (!b) return;
-    b.addEventListener("click", () => {
-      const pre = document.getElementById("agentPre");
-      const fallback = () => { const r = document.createRange(); r.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "Selected: press Ctrl+C"; };
-      try { navigator.clipboard.writeText(pre.textContent).then(() => { b.textContent = "Copied"; }, fallback); } catch (e) { fallback(); }
-    });
-  }
-  const humanBtn = document.getElementById("humanBtn"), agentBtn = document.getElementById("agentBtn");
-  function setAgent(on) {
-    state.agent = on;
-    humanBtn.setAttribute("aria-checked", String(!on)); agentBtn.setAttribute("aria-checked", String(on));
-    if (state.selected) renderEntity(state.selected);
-    else if (on) { sheetKind.textContent = "Data for agents"; sheetBody.innerHTML = agentView(null); bindAgent(); openSheet(); }
-    else closeSheet();
-  }
-  humanBtn.addEventListener("click", () => setAgent(false));
-  agentBtn.addEventListener("click", () => setAgent(true));
 
   // ---------- menu ----------
   const menu = document.getElementById("menu"), menuBtn = document.getElementById("menuBtn"), menuBody = document.getElementById("menuBody");
@@ -856,6 +876,143 @@ td small { display: block; color: var(--muted); font-size: 12px; }
   track.innerHTML = FACTS.map(([v, t, n]) => `<button data-step="${n}">${v !== "" ? `<b>${esc(v)}</b>` : ""}${esc(t)}</button>`).join("");
   track.querySelectorAll("[data-step]").forEach(b => b.addEventListener("click", () => showStep(+b.dataset.step)));
 
+  // ---------- method and findings ----------
+  const pct = (a, b) => Math.round(100 * a / Math.max(b, 1));
+  const N = v => `<span class="num">${esc(v)}</span>`;
+  function renderReport() {
+    const sims = allLinks.filter(l => l.kind === "similarity"), known = allLinks.filter(l => l.kind === "known");
+    const matchedP = new Set(sims.map(l => l.source)), matchedS = new Set(sims.map(l => l.target));
+    const lowN = sims.filter(l => l.low).length;
+    const rl = DATA.researchless.map(v => byId.get("S:" + v)).filter(Boolean);
+    const rlRows = rl.map(n => ({ n, top: linksOf(n.id, allLinks).filter(l => l.kind === "similarity")[0] })).filter(r => r.top);
+    // Startups with at least one match on a full abstract; the table shows that match
+    const rlHigh = rl.map(n => ({ n, top: linksOf(n.id, allLinks).find(l => l.kind === "similarity" && !l.low) })).filter(r => r.top);
+    const orph = DATA.orphans.map(p => byId.get("P:" + p)).filter(Boolean);
+    const orphInd = orph.filter(n => n.industry).length;
+    const partners = {};
+    orph.filter(n => n.industry).forEach(n => n.industry.split(" · ").forEach(c => { const k = c.replace(/\b(SPA|S P A|SRL|S R L|INC|NV|CORP)\b/g, "").replace(/\s+/g, " ").trim(); partners[k] = (partners[k] || 0) + 1; }));
+    const topPartners = Object.entries(partners).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => `${k.replace(/\w\S*/g, w => w[0] + w.slice(1).toLowerCase())} (${v})`);
+    const same = known.filter(l => l.relation === "same_company").map(l => byId.get(l.source)?.label).filter(Boolean);
+    const coapp = {};
+    known.filter(l => l.relation === "co_applicant").forEach(l => { const o = byId.get(l.target)?.label; if (o) coapp[o] = (coapp[o] || 0) + 1; });
+    const coappText = Object.entries(coapp).map(([k, v]) => `${k} on ${v} patent${v > 1 ? "s" : ""}`).join(" and ");
+
+    const steps = [
+      ["Polimi medtech patents", `${N(M.nPatents)} patent families filed by Politecnico di Milano in the medtech IPC classes (A61B, A61F, A61L, A61M, A61N, G16H), exported from Espacenet. Abstracts come from the EPO Open Patent Services for ${N(M.nAbstracts)} families; ${N(M.nPatents - M.nAbstracts)} older Italian filings are known only by their title. Applicants are kept only when they are organisations.`],
+      ["Lombard medtech startups", `${M.nItaly ? `The InfoCamere register of innovative startups (list of ${esc(M.startupList)}) holds ${N(M.nItaly.toLocaleString("en"))} companies, ${N(M.nRegion.toLocaleString("en"))} of them in Lombardy. ` : ""}${N(M.nStartups)} are medtech: ${N(M.nByAteco)} by ATECO code 32.50 or 26.60, the rest by medtech keywords. The register has no business description, so each company's homepage was read, respecting robots.txt; ${N(M.nStartupsText)} gave one, and ${N(M.nTranslated)} Italian texts were machine-translated to English.`],
+      ["Verified ties", `The ${N(M.nSpinoffsListed)} spin-offs listed by the Polimi Technology Transfer Office were matched to the register by website and name, and patent applicants were matched to spin-offs and startups. Only ${N(known.length)} ties are visible this way.`],
+      ["Semantic matching", `Every patent text was compared with every startup description using a multilingual sentence-embedding model (<span class="num">${esc(M.model.split("/").pop())}</span>) and cosine similarity. The threshold of ${N(M.threshold)} was chosen on ${N(M.calPairs || "–")} hand-labelled pairs, where it gives precision ${N(M.calPrecision ?? "–")} and recall ${N(M.calRecall ?? "–")}. BAAI/bge-m3 was tested too: it removes a language bias but ranked the labelled pairs worse.`],
+    ];
+
+    const leads = (rlHigh.length ? rlHigh : rlRows).sort((a, b) => b.top.score - a.top.score).slice(0, 8);
+    document.getElementById("reportBody").innerHTML = `
+      <header>
+        <h2 id="reportTitle">Method and findings</h2>
+        <p class="intro">This map asks two questions of open data: which medical technologies developed at Politecnico di Milano have no young company close to them, and which Lombard startups work near Polimi research without any visible tie to it.</p>
+      </header>
+
+      <section aria-labelledby="hMethod">
+        <h3 id="hMethod">What was done</h3>
+        <ol class="steps">${steps.map(([t, p]) => `<li><h4>${t}</h4><p>${p}</p></li>`).join("")}</ol>
+      </section>
+
+      <section aria-labelledby="hFindings">
+        <h3 id="hFindings">What we found</h3>
+        <div class="finding">
+          <div><h4>${N(DATA.researchless.length)} startups work near Polimi research with no visible tie</h4>
+            <p>${N(sims.length)} pairs of a patent and a startup score ${N(M.threshold)} or more, linking ${N(matchedP.size)} patents to ${N(matchedS.size)} startups. ${N(DATA.researchless.length)} of those startups are neither spin-offs nor co-applicants of a Polimi patent; ${N(rlHigh.length)} of them are matched on a full abstract, the rest only on a patent title.</p>
+            <p>These are leads for the Technology Transfer Office to check: a licence, a research contract or simply an introduction.</p></div>
+          <div class="side table-wrap" style="max-height:none"><table class="leads">
+            <thead><tr><th>Startup</th><th>Closest Polimi patent</th><th style="text-align:right">Score</th></tr></thead>
+            <tbody>${leads.map(({ n, top }) => `<tr tabindex="0" data-go="${esc(n.id)}"><td>${esc(n.label)}<small>${esc(n.place)}</small></td><td>${esc(trim(byId.get(top.source).label, 70))}<small>${esc(top.terms.slice(0, 3).join(" · "))}</small></td><td class="num">${fmt(top.score)}</td></tr>`).join("")}</tbody>
+          </table></div>
+        </div>
+        <div class="finding">
+          <div><h4>${N(pct(orph.length, M.nPatents) + "%")} of the patents have no startup in reach</h4>
+            <p>${N(orph.length)} of ${N(M.nPatents)} patents have no Lombard startup at or above the threshold and no spin-off. ${N(orphInd)} of them were co-filed with a company${topPartners.length ? `, most often ${esc(topPartners.join(", "))}` : ""}, so they already have an industrial route. That leaves ${N(orph.length - orphInd)} technologies with no visible way to market.</p>
+            <p>${familySentence(orph)}</p></div>
+          <div class="side chart" id="familyChart"></div>
+        </div>
+        <div class="finding">
+          <div><h4>Open data shows only ${N(known.length)} ties</h4>
+            <p>${same.length ? `${esc(same.join(" and "))} ${same.length > 1 ? "are" : "is"} both Polimi spin-off${same.length > 1 ? "s" : ""} and registered innovative startup${same.length > 1 ? "s" : ""}. ` : ""}${coappText ? `Among patent applicants, ${esc(coappText)}.` : ""} Licences, research contracts and informal collaborations do not appear in public records, so the real network is certainly denser than this map.</p></div>
+          <div class="side"><p>Low numbers here say more about transparency than about technology transfer itself. A public register of university licences would make this map far more precise.</p></div>
+        </div>
+      </section>
+
+      <section aria-labelledby="hLimits">
+        <h3 id="hLimits">Read with care</h3>
+        <ul class="limits">
+          <li><b>Similarity is a signal, not proof.</b> Two texts can be close in wording and far apart in technology; every match needs a human look.</li>
+          <li><b>Titles are weak evidence.</b> ${N(lowN)} of the ${N(sims.length)} matches start from a patent known only by its title; they are dashed on the map.</li>
+          <li><b>Only young companies are compared.</b> The register lists innovative startups for at most five years, and ${N(M.nStartups - M.nStartupsText)} of them published no description, so older firms and silent websites are missing.</li>
+          <li><b>Websites change.</b> Descriptions were read from homepages and some were machine-translated; a lapsed domain can describe a different business.</li>
+        </ul>
+      </section>
+
+      <section aria-labelledby="hRepro">
+        <h3 id="hRepro">Reproduce it</h3>
+        <p>Every step is a script that can be rerun from scratch. Raw downloads stay out of the repository; the processed tables, the manual calibration labels and this page are versioned. Only organisations are published, never inventors or founders.</p>
+        <pre><code>python src/collect/epo_ops.py          # patent abstracts (EPO OPS)
+python src/collect/startups.py --zip startup.zip
+python src/collect/websites.py         # startup homepages
+python src/collect/polimi_spinoffs.py
+python src/clean/startups.py &amp;&amp; python src/clean/spinoffs.py &amp;&amp; python src/clean/edges_known.py
+python src/clean/translate_en.py
+python src/embed/embed.py &amp;&amp; python src/score/similarity.py &amp;&amp; python src/score/gaps.py
+python src/build/site.py</code></pre>
+      </section>
+
+      <footer>Built ${esc(M.built)} · threshold ${esc(M.threshold)} · ${esc(M.model)}</footer>`;
+
+    document.querySelectorAll("#reportBody tr[data-go]").forEach(tr => {
+      const go = () => select(tr.dataset.go);
+      tr.addEventListener("click", go); tr.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+    });
+    drawFamilyChart();
+  }
+
+  // Most isolated families (share of patents with no startup, at least 5 patents) and the family with most matches
+  function familySentence(orph) {
+    const fam = n => (n.group in FAMILIES ? n.group : "A61B");
+    const stats = Object.keys(FAMILIES).map(f => {
+      const total = DATA.nodes.filter(n => n.type === "patent" && fam(n) === f).length;
+      const o = orph.filter(n => fam(n) === f).length;
+      return { f, total, o, share: total ? o / total : 0, matched: total - o };
+    }).filter(r => r.total >= 5);
+    if (!stats.length) return "";
+    const iso = [...stats].sort((a, b) => b.share - a.share).slice(0, 2);
+    const best = [...stats].sort((a, b) => b.matched - a.matched)[0];
+    const name = r => `${esc(FAMILIES[r.f].toLowerCase())} (${N(r.o + " of " + r.total)})`;
+    return `The most isolated families are ${iso.map(name).join(" and ")}. ${esc(FAMILIES[best.f])} has the most patents with a startup in reach: ${N(best.matched)}.`;
+  }
+
+  // Patents per technology family: matched, orphan with an industrial co-applicant, orphan
+  function drawFamilyChart() {
+    const box = document.getElementById("familyChart"); if (!box) return;
+    const rows = Object.keys(FAMILIES).map(f => {
+      const ps = DATA.nodes.filter(n => n.type === "patent" && (n.group in FAMILIES ? n.group : "A61B") === f);
+      const orphan = ps.filter(n => n.orphan && !n.industry).length, partner = ps.filter(n => n.orphan && n.industry).length;
+      return { f, matched: ps.length - orphan - partner, partner, orphan, total: ps.length };
+    }).filter(r => r.total).sort((a, b) => b.total - a.total);
+    const w = Math.max(280, box.clientWidth || 560), labelW = Math.min(230, w * 0.42), barW = w - labelW - 44, rowH = 34;
+    const x = d3.scaleLinear().domain([0, d3.max(rows, r => r.total)]).range([0, barW]);
+    const C = { matched: COLORS.patent, partner: "#a9a59d", orphan: "#2f7684" };
+    let y = 0, out = "";
+    rows.forEach(r => {
+      out += `<text x="0" y="${y + 21}" fill="#f4f2ee" font-size="13" font-family="Archivo, sans-serif" font-weight="600">${r.f}<tspan fill="#9b978f" font-weight="500"> · ${esc(FAMILIES[r.f])}</tspan></text>`;
+      let x0 = labelW;
+      [["matched", r.matched], ["partner", r.partner], ["orphan", r.orphan]].forEach(([k, v]) => {
+        if (v) out += `<rect x="${x0.toFixed(1)}" y="${y + 8}" width="${Math.max(1, x(v) - 1.5).toFixed(1)}" height="18" rx="2" fill="${C[k]}"><title>${r.f}: ${v} ${k}</title></rect>`;
+        x0 += x(v);
+      });
+      out += `<text x="${(x0 + 8).toFixed(1)}" y="${y + 21}" fill="#f4f2ee" font-size="12" font-family="'Fragment Mono', monospace">${r.total}</text>`;
+      y += rowH;
+    });
+    box.innerHTML = `<svg viewBox="0 0 ${w} ${y}" role="img" aria-label="Patents per technology family: matched, orphan with an industrial partner, orphan">${out}</svg>
+      <div class="legend-row"><span><i style="background:${C.matched}"></i>Startup in reach or known tie</span><span><i style="background:${C.partner}"></i>Orphan, industrial co-applicant</span><span><i style="background:${C.orphan}"></i>Orphan</span></div>`;
+  }
+
   // ---------- keyboard ----------
   document.addEventListener("keydown", e => {
     if (e.key === "Escape") {
@@ -868,6 +1025,7 @@ td small { display: block; color: var(--muted); font-size: 12px; }
   });
 
   // ---------- boot ----------
+  renderReport();
   drawStars();
   layout();
   render();
@@ -875,6 +1033,6 @@ td small { display: block; color: var(--muted); font-size: 12px; }
   const start = byToken.get(decodeURIComponent(location.hash.slice(1)));
   if (start) select(start);
   let resizeTimer;
-  window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { drawStars(); layout(); render(); if (!state.selected) svg.call(zoom.transform, home_t); }, 200); });
+  window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { drawStars(); layout(); render(); drawFamilyChart(); if (!state.selected) svg.call(zoom.transform, home_t); }, 200); });
 })();
 </script>
