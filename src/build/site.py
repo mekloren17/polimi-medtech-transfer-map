@@ -89,6 +89,8 @@ def build_data():
             "mt": r.patent_id in en_title,
             "text": clip(r.abstract, 700) if r.abstract else "",
             "ipc": r.ipc_subclasses.split("|")[0] if r.ipc_subclasses else "",
+            # Technology family for the map clusters: first medtech IPC subclass
+            "group": (r.medtech_subclasses.split("|")[0] if r.medtech_subclasses else "A61B"),
             "ipcAll": r.ipc_subclasses.replace("|", " · "),
             "priority": r.priority_date[:4],
             "applicants": r.applicants.replace("|", " · "),
