@@ -279,13 +279,13 @@ td small { display: block; color: var(--muted); font-size: 12px; }
 <section class="stage" aria-label="Transfer map">
 <div id="sky"></div>
 <canvas id="stars" aria-hidden="true"></canvas>
-<svg id="map" role="application" aria-label="Map of Polimi medtech patents, Lombard startups and Polimi spin-offs. Use the search or the lists in the menu to reach every item by keyboard."></svg>
+<svg id="map" role="application" aria-label="Map of Polimi medtech patents, __SCOPE_ADJ__ startups and Polimi spin-offs. Use the search or the lists in the menu to reach every item by keyboard."></svg>
 
 <header class="top">
   <button class="round" id="menuBtn" aria-label="Open the menu: views, filters, lists and sources" aria-controls="menu" aria-expanded="false">
     <svg viewBox="0 0 24 24"><path d="M5 8h14M5 12h14M5 16h9"/></svg>
   </button>
-  <h1 class="brand">Transfer Map<small>Polimi medtech · Lombard startups</small></h1>
+  <h1 class="brand">Transfer Map<small>Polimi medtech · __SCOPE_ADJ__ startups</small></h1>
   <button class="round" id="searchBtn" aria-label="Search a patent, startup or spin-off">
     <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg>
   </button>
@@ -415,21 +415,36 @@ td small { display: block; color: var(--muted); font-size: 12px; }
   const degree = new Map();
   allLinks.forEach(l => { degree.set(l.source, (degree.get(l.source) || 0) + 1); degree.set(l.target, (degree.get(l.target) || 0) + 1); });
 
+  // ISTAT macro-areas; the inner placement loosely follows geography (north at the top)
+  const AREAS = {
+    "North-West": { dx: -0.34, dy: -0.30, short: "NW" }, "North-East": { dx: 0.34, dy: -0.30, short: "NE" },
+    "Centre": { dx: 0, dy: 0.02, short: "Centre" }, "South": { dx: 0.32, dy: 0.34, short: "South" },
+    "Islands": { dx: -0.32, dy: 0.36, short: "Islands" },
+  };
+  const areaOf = n => (n.area in AREAS ? n.area : "Centre");
   function home(n) {
     if (n.type === "patent") return n.group in FAMILIES ? n.group : "A61B";
     if (n.type === "spinoff") return "SPINOFF";
-    return "STARTUP";
+    return "AREA:" + areaOf(n);
   }
 
   function layout() {
     W = stage.clientWidth; H = stage.clientHeight;
-    const cx = W / 2, cy = H / 2, rx = Math.max(200, Math.min(W * 0.32, 500)), ry = Math.max(170, Math.min(H * 0.26, 290));
+    // With startups split over several macro-areas, the family orbit widens to leave them room inside
+    const used = Object.keys(AREAS).filter(a => nodes.some(n => n.type === "startup" && areaOf(n) === a));
+    const widen = used.length > 1 ? 1.3 : 1;
+    const cx = W / 2, cy = H / 2;
+    const rx = Math.max(200, Math.min(W * 0.32, 500)) * widen, ry = Math.max(170, Math.min(H * 0.26, 290)) * widen;
     const fams = Object.keys(FAMILIES);
     fams.forEach((f, i) => {
       const a = -Math.PI / 2 + (i * 2 * Math.PI) / fams.length;
       centers[f] = { x: cx + rx * Math.cos(a), y: cy + ry * Math.sin(a) };
     });
-    centers.STARTUP = { x: cx, y: cy + 10 };
+    // Only the areas that hold startups get a place; a single area sits in the centre
+    used.forEach(a => {
+      const d = used.length > 1 ? AREAS[a] : { dx: 0, dy: 0 };
+      centers["AREA:" + a] = { x: cx + d.dx * rx * 0.8, y: cy + 10 + d.dy * ry * 0.8 };
+    });
     centers.SPINOFF = { x: cx + rx * 1.1, y: cy - ry * 1.05 };
     drawGraticule(cx, cy, rx, ry);
     nodes.forEach(n => {
@@ -519,22 +534,23 @@ td small { display: block; color: var(--muted); font-size: 12px; }
   }
 
   function clusterLabels() {
-    const groups = Object.keys(FAMILIES).concat(["STARTUP", "SPINOFF"]);
+    const groups = Object.keys(FAMILIES).concat(Object.keys(AREAS).map(a => "AREA:" + a), ["SPINOFF"]);
     const rows = groups.map(k => {
       const members = nodes.filter(n => home(n) === k);
       if (!members.length) return null;
       let x, y, name, stat;
-      if (k === "STARTUP") {
+      if (k.startsWith("AREA:")) {
         const free = members.filter(n => !n.deg);
-        x = d3.mean(free, n => n.x); y = d3.max(free, n => n.y) + 28;
-        name = "Lombard startups";
+        const pts = free.length ? free : members;
+        x = d3.mean(pts, n => n.x); y = d3.max(pts, n => n.y) + 28;
+        name = `${k.slice(5)} startups`;
         stat = `${members.length} · ${members.filter(n => n.researchless).length} research-less`;
       } else {
         x = d3.mean(members, n => n.x); y = d3.min(members, n => n.y) - 22;
         if (k === "SPINOFF") { name = "Polimi spin-offs"; stat = `${members.length} medtech or linked`; }
         else { name = `${k} · ${FAMILIES[k]}`; stat = `${members.length} patents · ${members.filter(n => n.orphan).length} orphan`; }
       }
-      const short = k === "STARTUP" ? "Startups" : k === "SPINOFF" ? "Spin-offs" : k;
+      const short = k.startsWith("AREA:") ? AREAS[k.slice(5)].short : k === "SPINOFF" ? "Spin-offs" : k;
       return { k, x, y, name, stat, short };
     }).filter(Boolean);
     const lab = labelLayer.selectAll("g.cluster-label").data(rows, d => d.k).join(e => {
@@ -555,6 +571,11 @@ td small { display: block; color: var(--muted); font-size: 12px; }
   }
 
   function viewSet() {
+    if (state.view.startsWith("area:")) {
+      const a = state.view.slice(5), s = new Set(DATA.nodes.filter(n => n.type === "startup" && n.area === a).map(n => n.id));
+      activeLinks().forEach(l => { if (s.has(l.target)) s.add(l.source); });
+      return s;
+    }
     if (state.view === "orphans") return new Set(DATA.orphans.map(p => "P:" + p));
     if (state.view === "researchless") return new Set(DATA.researchless.map(v => "S:" + v));
     if (state.view === "matches") { const s = new Set(); activeLinks().filter(l => l.kind === "similarity").forEach(l => { s.add(l.source); s.add(l.target); }); return s; }
@@ -644,13 +665,13 @@ td small { display: block; color: var(--muted); font-size: 12px; }
     if (n.type === "patent") {
       const base = `A Politecnico di Milano patent in ${n.group} (${(FAMILIES[n.group] || "medtech").toLowerCase()}), priority ${n.priority}.`;
       if (known.length) return base + ` Co-filed with ${known.map(l => byId.get(l.target).label).join(", ")}, a Polimi spin-off.`;
-      if (sims.length) return base + ` ${sims.length} Lombard startup${sims.length > 1 ? "s" : ""} within reach, closest ${byId.get(sims[0].target).label} at ${fmt(sims[0].score)}.`;
+      if (sims.length) return base + ` ${sims.length} __SCOPE_ADJ__ startup${sims.length > 1 ? "s" : ""} within reach, closest ${byId.get(sims[0].target).label} at ${fmt(sims[0].score)}.`;
       const best = n.bestStartup && byId.get(n.bestStartup);
       return base + (n.industry ? ` Co-filed with ${n.industry}, so it has an industrial partner, but no startup is close.`
-        : ` No Lombard startup within reach${best ? `: the closest is ${best.label} at ${fmt(n.best)}` : ""}.`);
+        : ` No __SCOPE_ADJ__ startup within reach${best ? `: the closest is ${best.label} at ${fmt(n.best)}` : ""}.`);
     }
     if (n.type === "startup") {
-      const base = `A Lombard innovative startup${n.place ? ` based in ${n.place}` : ""}${n.founded ? `, active since ${n.founded}` : ""}.`;
+      const base = `A __SCOPE_ADJ__ innovative startup${n.place ? ` based in ${n.place}` : ""}${n.founded ? `, active since ${n.founded}` : ""}.`;
       if (n.spinoff) return base + " An accredited Polimi spin-off.";
       if (n.noText) return base + " Its website gave no description, so it was not compared with Polimi patents.";
       if (sims.length) return base + ` Close to ${sims.length} Polimi patent${sims.length > 1 ? "s" : ""} with no known tie to Polimi.`;
@@ -685,7 +706,7 @@ td small { display: block; color: var(--muted); font-size: 12px; }
         ["IPC", `<span class="mono">${esc(n.ipcAll)}</span>`], ["Applicants", esc(n.applicants)]);
       links = `<a class="btn" href="https://worldwide.espacenet.com/patent/search?q=pn%3D${encodeURIComponent(n.ref)}" target="_blank" rel="noopener">Espacenet${OUT}</a>`;
     } else if (n.type === "startup") {
-      facts.push(["Company", esc(n.legal)], ["Based in", esc(n.place)], ["Sector", esc(n.sector)], ["Tax code", `<span class="mono">${esc(n.ref)}</span>`]);
+      facts.push(["Company", esc(n.legal)], ["Based in", esc(n.place + (n.region ? `, ${n.region}` : ""))], ["Sector", esc(n.sector)], ["Tax code", `<span class="mono">${esc(n.ref)}</span>`]);
       if (n.website) links = `<a class="btn" href="${esc(href(n.website))}" target="_blank" rel="noopener">Website${OUT}</a>`;
     } else {
       facts.push(["Company", esc(n.legal)], ["Founded", `<span class="mono">${esc(n.founded)}</span>`]);
@@ -741,10 +762,15 @@ td small { display: block; color: var(--muted); font-size: 12px; }
     ["orphans", "Orphan technologies", `${DATA.orphans.length}`],
     ["verified", "Verified ties", `${allLinks.filter(l => l.kind === "known").length}`],
   ];
+  const AREA_VIEWS = Object.keys(AREAS).map(a => {
+    const k = DATA.nodes.filter(n => n.type === "startup" && n.area === a).length;
+    return k ? [`area:${a}`, a, `${k} startups`] : null;
+  }).filter(Boolean);
   let listTab = "researchless";
   function renderMenu() {
     menuBody.innerHTML = `
       <div class="menu-group"><h2>Views</h2>${VIEWS.map(([k, t, s]) => `<button class="option" data-view="${k}" aria-pressed="${state.view === k}"><span>${t}</span><small>${s}</small></button>`).join("")}</div>
+      ${AREA_VIEWS.length > 1 ? `<div class="menu-group"><h2>Area</h2>${AREA_VIEWS.map(([k, t, s]) => `<button class="option" data-view="${k}" aria-pressed="${state.view === k}"><span>${t}</span><small>${s}</small></button>`).join("")}</div>` : ""}
       <div class="menu-group"><h2>Filters</h2>
         <label class="range" for="minScore"><span>Minimum similarity <b class="mono" id="minOut">${state.min.toFixed(2)}</b></span>
           <input id="minScore" type="range" min="${M.threshold}" max="${(Math.floor(maxScore * 100) / 100).toFixed(2)}" step="0.01" value="${state.min}"></label>
@@ -756,13 +782,13 @@ td small { display: block; color: var(--muted); font-size: 12px; }
       </div>
       <div class="menu-group"><h2>Legend</h2><div class="legend">
         <span><i style="background:${COLORS.patent}"></i>Polimi patent (darker: orphan)</span>
-        <span><i style="background:${COLORS.startup}"></i>Lombard startup</span>
+        <span><i style="background:${COLORS.startup}"></i>__SCOPE_ADJ__ startup</span>
         <span><i style="border:2px solid ${COLORS.red}"></i>Research-less startup</span>
         <span><i style="background:${COLORS.spinoff}"></i>Polimi spin-off</span>
         <span><i class="line" style="border-color:${COLORS.verified}"></i>Verified tie</span>
         <span><i class="line" style="border-color:#f4f2ee;border-top-style:dashed"></i>Match from a title-only patent</span></div></div>
       <div class="menu-group"><h2>Sources</h2>
-        <p class="note">Patents: Polimi applications in IPC A61B, A61F, A61L, A61M, A61N, G16H (Espacenet), abstracts from EPO Open Patent Services. Startups: InfoCamere register of innovative startups (list of ${esc(M.startupList)}), Lombardy, ATECO 32.50 / 26.60 or medtech keywords; descriptions from each company's homepage, Italian texts machine-translated (Helsinki-NLP opus-mt-it-en). Spin-offs: Polimi Technology Transfer Office public list (${M.nSpinoffsListed} listed).</p>
+        <p class="note">Patents: Polimi applications in IPC A61B, A61F, A61L, A61M, A61N, G16H (Espacenet), abstracts from EPO Open Patent Services. Startups: InfoCamere register of innovative startups (list of ${esc(M.startupList)}), __SCOPE_PLACE__, ATECO 32.50 / 26.60 or medtech keywords; descriptions from each company's homepage, Italian texts machine-translated (Helsinki-NLP opus-mt-it-en). Spin-offs: Polimi Technology Transfer Office public list (${M.nSpinoffsListed} listed).</p>
         <p class="note">Similarity: cosine between multilingual sentence embeddings (<span class="mono">${esc(M.model)}</span>), threshold ${M.threshold} calibrated on hand-labelled pairs. A signal, not proof of fit. Only organisations are shown. Built ${esc(M.built)}.</p>
       </div>`;
     menuBody.querySelectorAll("[data-view]").forEach(b => b.addEventListener("click", () => { setView(b.dataset.view); renderMenu(); }));
@@ -831,11 +857,11 @@ td small { display: block; color: var(--muted); font-size: 12px; }
   const STEPS = [
     { t: `${M.nPatents} medical patents from Politecnico di Milano`, p: "Every blue dot is a Polimi patent family in the medtech IPC classes, read from Espacenet with its abstract from the EPO Open Patent Services. Inventors are counted, never named.", f: () => ids(n => n.type === "patent") },
     { t: "Six technology families", p: "Patents sit in clusters by their main IPC subclass: diagnosis and surgery, drug delivery, prostheses, biomaterials, electro and radiation therapy, health informatics. This is the biggest: diagnosis and surgery.", f: () => ids(n => n.type === "patent" && n.group === "A61B") },
-    { t: `${M.nStartups} Lombard medtech startups`, p: `Amber dots are innovative startups registered in Lombardy (InfoCamere list of ${M.startupList}). ${M.nStartupsText} describe themselves on their website, which is what the map reads; the rest stay dim.`, f: () => ids(n => n.type === "startup") },
+    { t: `${M.nStartups} __SCOPE_ADJ__ medtech startups`, p: `Amber dots are innovative startups registered in __SCOPE_PLACE__ (InfoCamere list of ${M.startupList}), grouped by macro-area. ${M.nStartupsText} describe themselves on their website, which is what the map reads; the rest stay dim.`, f: () => ids(n => n.type === "startup") },
     { t: "How a line is drawn", p: `A white line joins a patent and a startup whose texts are semantically close: a score of ${M.threshold} or more on a multilingual embedding model. ${nSim.length} pairs pass. Dashed lines start from patents with only a title, so they are less reliable.`, f: () => { const s = new Set(); nSim.forEach(l => { s.add(l.source); s.add(l.target); }); return s; } },
     { t: "Verified ties", p: `Green marks what public sources confirm: startups that are Polimi spin-offs, and companies that co-filed a Polimi patent. Only ${nKnown} such ties are visible in open data.`, f: () => { const s = new Set(); allLinks.filter(l => l.kind === "known").forEach(l => { s.add(l.source); s.add(l.target); }); return s; } },
     { t: `${DATA.researchless.length} research-less startups`, p: "Red rings mark startups close to a Polimi patent with no known tie to Polimi. Each one is a lead for the Technology Transfer Office to check.", f: () => new Set(DATA.researchless.map(v => "S:" + v)) },
-    { t: `${DATA.orphans.length} orphan technologies`, p: `Darker blue dots are patents with no spin-off and no Lombard startup within reach. ${DATA.nodes.filter(n => n.orphan && n.industry).length} of them already have an industrial co-applicant, so they are orphan only with respect to startups.`, f: () => new Set(DATA.orphans.map(p => "P:" + p)) },
+    { t: `${DATA.orphans.length} orphan technologies`, p: `Darker blue dots are patents with no spin-off and no __SCOPE_ADJ__ startup within reach. ${DATA.nodes.filter(n => n.orphan && n.industry).length} of them already have an industrial co-applicant, so they are orphan only with respect to startups.`, f: () => new Set(DATA.orphans.map(p => "P:" + p)) },
     { t: "What is missing", p: "Licences and informal collaborations are mostly not public, older companies are not in the startup register, and similarity is a signal, not proof. Treat every gap as a lead to check.", f: () => null },
   ];
   let step = -1;
@@ -864,7 +890,7 @@ td small { display: block; color: var(--muted); font-size: 12px; }
 
   const FACTS = [
     [M.nPatents, "Polimi medtech patents", 0],
-    [M.nStartups, "Lombard medtech startups", 2],
+    [M.nStartups, "__SCOPE_ADJ__ medtech startups", 2],
     [nSim.length, `matches at ≥ ${M.threshold}`, 3],
     [nKnown, "verified ties", 4],
     [DATA.researchless.length, "startups near Polimi research, no tie", 5],
@@ -898,7 +924,7 @@ td small { display: block; color: var(--muted); font-size: 12px; }
 
     const steps = [
       ["Polimi medtech patents", `${N(M.nPatents)} patent families filed by Politecnico di Milano in the medtech IPC classes (A61B, A61F, A61L, A61M, A61N, G16H), exported from Espacenet. Abstracts come from the EPO Open Patent Services for ${N(M.nAbstracts)} families; ${N(M.nPatents - M.nAbstracts)} older Italian filings are known only by their title. Applicants are kept only when they are organisations.`],
-      ["Lombard medtech startups", `${M.nItaly ? `The InfoCamere register of innovative startups (list of ${esc(M.startupList)}) holds ${N(M.nItaly.toLocaleString("en"))} companies, ${N(M.nRegion.toLocaleString("en"))} of them in Lombardy. ` : ""}${N(M.nStartups)} are medtech: ${N(M.nByAteco)} by ATECO code 32.50 or 26.60, the rest by medtech keywords. The register has no business description, so each company's homepage was read, respecting robots.txt; ${N(M.nStartupsText)} gave one, and ${N(M.nTranslated)} Italian texts were machine-translated to English.`],
+      ["__SCOPE_ADJ__ medtech startups", `${M.nItaly ? `The InfoCamere register of innovative startups (list of ${esc(M.startupList)}) holds ${N(M.nItaly.toLocaleString("en"))} companies${M.nRegion !== M.nItaly ? `, ${N(M.nRegion.toLocaleString("en"))} of them in __SCOPE_PLACE__` : ""}. ` : ""}${N(M.nStartups)} are medtech: ${N(M.nByAteco)} by ATECO code 32.50 or 26.60, the rest by medtech keywords. The register has no business description, so each company's homepage was read, respecting robots.txt; ${N(M.nStartupsText)} gave one, and ${N(M.nTranslated)} Italian texts were machine-translated to English.`],
       ["Verified ties", `The ${N(M.nSpinoffsListed)} spin-offs listed by the Polimi Technology Transfer Office were matched to the register by website and name, and patent applicants were matched to spin-offs and startups. Only ${N(known.length)} ties are visible this way.`],
       ["Semantic matching", `Every patent text was compared with every startup description using a multilingual sentence-embedding model (<span class="num">${esc(M.model.split("/").pop())}</span>) and cosine similarity. The threshold of ${N(M.threshold)} was chosen on ${N(M.calPairs || "–")} hand-labelled pairs, where it gives precision ${N(M.calPrecision ?? "–")} and recall ${N(M.calRecall ?? "–")}. BAAI/bge-m3 was tested too: it removes a language bias but ranked the labelled pairs worse.`],
     ];
@@ -907,7 +933,7 @@ td small { display: block; color: var(--muted); font-size: 12px; }
     document.getElementById("reportBody").innerHTML = `
       <header>
         <h2 id="reportTitle">Method and findings</h2>
-        <p class="intro">This map asks two questions of open data: which medical technologies developed at Politecnico di Milano have no young company close to them, and which Lombard startups work near Polimi research without any visible tie to it.</p>
+        <p class="intro">This map asks two questions of open data: which medical technologies developed at Politecnico di Milano have no young company close to them, and which __SCOPE_ADJ__ startups work near Polimi research without any visible tie to it.</p>
       </header>
 
       <section aria-labelledby="hMethod">
@@ -920,6 +946,7 @@ td small { display: block; color: var(--muted); font-size: 12px; }
         <div class="finding">
           <div><h4>${N(DATA.researchless.length)} startups work near Polimi research with no visible tie</h4>
             <p>${N(sims.length)} pairs of a patent and a startup score ${N(M.threshold)} or more, linking ${N(matchedP.size)} patents to ${N(matchedS.size)} startups. ${N(DATA.researchless.length)} of those startups are neither spin-offs nor co-applicants of a Polimi patent; ${N(rlHigh.length)} of them are matched on a full abstract, the rest only on a patent title.</p>
+            ${areaSentence(rl)}
             <p>These are leads for the Technology Transfer Office to check: a licence, a research contract or simply an introduction.</p></div>
           <div class="side table-wrap" style="max-height:none"><table class="leads">
             <thead><tr><th>Startup</th><th>Closest Polimi patent</th><th style="text-align:right">Score</th></tr></thead>
@@ -928,7 +955,7 @@ td small { display: block; color: var(--muted); font-size: 12px; }
         </div>
         <div class="finding">
           <div><h4>${N(pct(orph.length, M.nPatents) + "%")} of the patents have no startup in reach</h4>
-            <p>${N(orph.length)} of ${N(M.nPatents)} patents have no Lombard startup at or above the threshold and no spin-off. ${N(orphInd)} of them were co-filed with a company${topPartners.length ? `, most often ${esc(topPartners.join(", "))}` : ""}, so they already have an industrial route. That leaves ${N(orph.length - orphInd)} technologies with no visible way to market.</p>
+            <p>${N(orph.length)} of ${N(M.nPatents)} patents have no __SCOPE_ADJ__ startup at or above the threshold and no spin-off. ${N(orphInd)} of them were co-filed with a company${topPartners.length ? `, most often ${esc(topPartners.join(", "))}` : ""}, so they already have an industrial route. That leaves ${N(orph.length - orphInd)} technologies with no visible way to market.</p>
             <p>${familySentence(orph)}</p></div>
           <div class="side chart" id="familyChart"></div>
         </div>
@@ -964,6 +991,14 @@ td small { display: block; color: var(--muted); font-size: 12px; }
       tr.addEventListener("click", go); tr.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
     });
     drawFamilyChart();
+  }
+
+  // Where the research-less startups are, when the scope spans several regions
+  function areaSentence(rl) {
+    if (!rl.length || (M.scopeRegions || []).length === 1) return "";
+    const lom = rl.filter(n => (n.region || "").toLowerCase() === "lombardia").length;
+    const byArea = d3.rollups(rl, v => v.length, n => n.area || "unknown").sort((a, b) => b[1] - a[1]);
+    return `<p>${N(lom)} of them are in Lombardy, a short trip from the Politecnico, and ${N(rl.length - lom)} elsewhere in Italy. By macro-area: ${byArea.map(([a, v]) => `${esc(a)} ${N(v)}`).join(", ")}.</p>`;
   }
 
   // Most isolated families (share of patents with no startup, at least 5 patents) and the family with most matches

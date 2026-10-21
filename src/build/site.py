@@ -66,6 +66,20 @@ def clip(text, n):
     return text if len(text) <= n else text[: n - 1].rsplit(" ", 1)[0] + "…"
 
 
+# Adjective and place name for the startup scope, used in the page copy
+SCOPE_WORDS = {"lombardia": ("Lombard", "Lombardy"), "piemonte": ("Piedmontese", "Piedmont"),
+               "veneto": ("Venetian", "Veneto"), "emilia-romagna": ("Emilian", "Emilia-Romagna"),
+               "lazio": ("Lazio", "Lazio"), "toscana": ("Tuscan", "Tuscany")}
+
+
+def scope_words(regions):
+    if not regions:
+        return "Italian", "Italy"
+    if len(regions) == 1:
+        return SCOPE_WORDS.get(regions[0].casefold(), (regions[0].title(), regions[0].title()))
+    return "regional", ", ".join(r.title() for r in regions)
+
+
 def build_data():
     cfg = yaml.safe_load(open("config.yaml", encoding="utf-8"))
     patents, startups, spinoffs = read("patents.csv"), read("startups.csv"), read("spinoffs.csv")
@@ -104,6 +118,7 @@ def build_data():
         nodes.append({
             "id": "S:" + r.vat_number, "type": "startup", "ref": r.vat_number,
             "label": short_name(r.name), "legal": r.name,
+            "region": r.region, "area": r.macro_area,
             "text": clip(en_desc.get(r.vat_number, r.description), 500), "mt": r.vat_number in en_desc,
             "place": r.municipality.title(), "website": r.website,
             "sector": NACE.get(r.ateco[:2], ""),
@@ -139,6 +154,7 @@ def build_data():
         "meta": {
             "threshold": cfg["similarity"]["threshold"],
             "repoUrl": (cfg.get("site") or {}).get("repo_url") or "",
+            "scopeRegions": cfg["startups"].get("regions") or [],
             "model": cfg["embedding"]["model"],
             "startupList": startups["list_date"].iloc[0] if len(startups) else "",
             "built": date.today().isoformat(),
@@ -194,6 +210,8 @@ def main():
     payload = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     fragment = TEMPLATE.read_text(encoding="utf-8").replace("__DATA__", payload)
 
+    adj, place = scope_words(yaml.safe_load(open("config.yaml", encoding="utf-8"))["startups"].get("regions") or [])
+    fragment = fragment.replace("__SCOPE_ADJ__", adj).replace("__SCOPE_PLACE__", place)
     head, _, body = fragment.partition("<!--/HEAD-->")
     page = (
         '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
