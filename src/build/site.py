@@ -1,7 +1,8 @@
 """Build the static site: an interactive transfer map plus the two gap lists.
 
 Inputs:  data/processed/{patents,startups,spinoffs,edges_similarity,edges_known,
-         orphan_technologies,researchless_startups}.csv and config.yaml
+         orphan_technologies,researchless_startups,translations_en}.csv and config.yaml
+         Italian texts are shown in their English machine translation (marked as such).
 Outputs: site/index.html             full page for GitHub Pages
          --fragment PATH (optional)  the same page without <html>/<head>/<body>, for hosts
                                      that wrap the page themselves (e.g. a Claude artifact)
@@ -41,6 +42,25 @@ def short_name(name):
     return base.title() if base.isupper() and len(base) > 4 else base
 
 
+# ATECO 2007 divisions are the NACE Rev. 2 divisions: official English names
+NACE = {
+    "20": "Manufacture of chemicals and chemical products",
+    "21": "Manufacture of basic pharmaceutical products and preparations",
+    "22": "Manufacture of rubber and plastic products",
+    "26": "Manufacture of computer, electronic and optical products",
+    "27": "Manufacture of electrical equipment",
+    "28": "Manufacture of machinery and equipment n.e.c.",
+    "32": "Other manufacturing",
+    "33": "Repair and installation of machinery and equipment",
+    "62": "Computer programming, consultancy and related activities",
+    "63": "Information service activities",
+    "71": "Architectural and engineering activities; technical testing and analysis",
+    "72": "Scientific research and development",
+    "74": "Other professional, scientific and technical activities",
+    "86": "Human health activities",
+}
+
+
 def clip(text, n):
     text = re.sub(r"\s+", " ", text).strip()
     return text if len(text) <= n else text[: n - 1].rsplit(" ", 1)[0] + "…"
@@ -52,6 +72,10 @@ def build_data():
     sim, known = read("edges_similarity.csv"), read("edges_known.csv")
     orphans, researchless = read("orphan_technologies.csv"), read("researchless_startups.csv")
     orphan_info = orphans.set_index("patent_id")
+    tr = read("translations_en.csv") if (PROCESSED / "translations_en.csv").exists() else pd.DataFrame(
+        columns=["kind", "key", "text_en"])
+    en = {kind: g.set_index("key")["text_en"].to_dict() for kind, g in tr.groupby("kind")}
+    en_title, en_desc = (en.get(k, {}) for k in ("patent_title", "startup_description"))
     rl_ids = set(researchless["vat_number"])
     linked_spinoffs = set(known.loc[known["target_type"] == "spinoff", "target_id"]) | set(
         known.loc[known["source_type"] == "spinoff", "source_id"])
@@ -61,7 +85,8 @@ def build_data():
         o = orphan_info.loc[r.patent_id] if r.patent_id in orphan_info.index else None
         nodes.append({
             "id": "P:" + r.patent_id, "type": "patent", "ref": r.patent_id,
-            "label": clip(r.title.capitalize() if r.title.isupper() else r.title, 70),
+            "label": clip(en_title.get(r.patent_id) or (r.title.capitalize() if r.title.isupper() else r.title), 70),
+            "mt": r.patent_id in en_title,
             "text": clip(r.abstract, 700) if r.abstract else "",
             "ipc": r.ipc_subclasses.split("|")[0] if r.ipc_subclasses else "",
             "ipcAll": r.ipc_subclasses.replace("|", " · "),
@@ -77,8 +102,9 @@ def build_data():
         nodes.append({
             "id": "S:" + r.vat_number, "type": "startup", "ref": r.vat_number,
             "label": short_name(r.name), "legal": r.name,
-            "text": clip(r.description, 500), "place": r.municipality.title(),
-            "website": r.website, "sector": r.ateco_division[2:].strip().capitalize(),
+            "text": clip(en_desc.get(r.vat_number, r.description), 500), "mt": r.vat_number in en_desc,
+            "place": r.municipality.title(), "website": r.website,
+            "sector": NACE.get(r.ateco[:2], ""),
             "founded": r.founded[:4], "spinoff": r.is_polimi_spinoff == "True",
             "researchless": r.vat_number in rl_ids, "noText": r.description == "",
         })

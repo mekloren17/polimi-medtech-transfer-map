@@ -372,15 +372,17 @@ td .sub { display: block; font-size: 12px; color: var(--muted); font-family: var
       body = `<dl class="kv"><dt>Publication</dt><dd class="mono">${esc(n.ref)}</dd><dt>Priority</dt><dd class="mono">${esc(n.priority)}</dd>
         <dt>IPC</dt><dd class="mono">${esc(n.ipcAll)}</dd><dt>Applicants</dt><dd>${esc(n.applicants)}</dd></dl>
         ${n.text ? `<p class="text">${esc(n.text)}</p>` : `<p class="text">No abstract available: matched on the title only.</p>`}
+        ${n.mt ? `<p class="text"><em>Title machine-translated from Italian.</em></p>` : ""}
         ${n.orphan && n.bestStartup && byId.get(n.bestStartup) ? `<p class="text">Closest startup: <strong>${esc(byId.get(n.bestStartup).label)}</strong> at ${fmt(n.best)}, below the ${M.threshold} threshold.</p>` : ""}`;
     } else if (n.type === "startup") {
       if (n.researchless) chips.push(`<span class="chip flag">research-less</span>`);
       if (n.spinoff) chips.push(`<span class="chip ok">Polimi spin-off</span>`);
       if (n.noText) chips.push(`<span class="chip">no description</span>`);
       body = `<dl class="kv"><dt>Company</dt><dd>${esc(n.legal)}</dd><dt>Based in</dt><dd>${esc(n.place)}</dd>
-        <dt>Sector</dt><dd>${esc(n.sector)}</dd><dt>VAT</dt><dd class="mono">${esc(n.ref)}</dd>
+        <dt>Sector</dt><dd>${esc(n.sector)}</dd><dt>Tax code</dt><dd class="mono">${esc(n.ref)}</dd>
         ${n.website ? `<dt>Website</dt><dd><a href="${esc(/^https?:/.test(n.website) ? n.website : "https://" + n.website)}" target="_blank" rel="noopener">${esc(n.website)}</a></dd>` : ""}</dl>
-        ${n.text ? `<p class="text">${esc(n.text)}</p>` : ""}`;
+        ${n.text ? `<p class="text">${esc(n.text)}</p>` : ""}
+        ${n.mt ? `<p class="text"><em>Machine-translated from the company's Italian website.</em></p>` : ""}`;
     } else {
       chips.push(`<span class="chip ok">Polimi spin-off</span>`);
       body = `<dl class="kv"><dt>Company</dt><dd>${esc(n.legal)}</dd><dt>Founded</dt><dd class="mono">${esc(n.founded)}</dd>
@@ -438,7 +440,7 @@ td .sub { display: block; font-size: 12px; color: var(--muted); font-family: var
 
   document.getElementById("method").innerHTML = `
     <span class="eyebrow">Method and sources</span>
-    <p>Patents: Polimi applications in IPC A61B, A61F, A61L, A61M, A61N, G16H (Espacenet), abstracts from EPO Open Patent Services. Startups: InfoCamere register of innovative startups (list of ${esc(M.startupList)}), Lombardy, ATECO 32.50 / 26.60 or medtech keywords; descriptions from each company's homepage. Spin-offs: Polimi Technology Transfer Office public list (${M.nSpinoffsListed} listed).</p>
+    <p>Patents: Polimi applications in IPC A61B, A61F, A61L, A61M, A61N, G16H (Espacenet), abstracts from EPO Open Patent Services. Startups: InfoCamere register of innovative startups (list of ${esc(M.startupList)}), Lombardy, ATECO 32.50 / 26.60 or medtech keywords; descriptions from each company's homepage. Italian texts are shown in English machine translation (Helsinki-NLP opus-mt-it-en); scores use the original texts. Spin-offs: Polimi Technology Transfer Office public list (${M.nSpinoffsListed} listed).</p>
     <p>Similarity: cosine between multilingual sentence embeddings (<span class="mono">${esc(M.model)}</span>), threshold ${M.threshold} calibrated on hand-labelled pairs. Similarity is a signal, not proof of fit; licences and informal collaborations are mostly not public, so "orphan" and "research-less" are starting points for human review. Only organisations are shown, never inventors or founders. Built ${esc(M.built)}.</p>`;
 
   // Re-colour on theme change
