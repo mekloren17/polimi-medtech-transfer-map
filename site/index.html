@@ -7,7 +7,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Fragment+Mono&display=swap">
 <style>
 /* Layout: a full-screen night map of technology families; chrome floats at the edges
    (menu, title, search on top; breadcrumb under it; tour bar at the bottom; entity sheet on demand). */
@@ -20,7 +20,6 @@
   --fg: #f4f2ee;
   --muted: #9b978f;
   --line: rgba(244, 242, 238, 0.14);
-  --glow: #8e1414;
   --red: #ff3b30;
   --verified: #34d27b;
   --patent: #5fd3e6;
@@ -28,10 +27,14 @@
   --spinoff: #b38cff;
   --font-display: "Archivo", "Arial Black", system-ui, sans-serif;
   --font-body: "Archivo", "Segoe UI", system-ui, sans-serif;
-  --font-mono: "Geist Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  /* Monospace only for data: publication numbers, tax codes, scores, IPC codes */
+  --font-mono: "Fragment Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
+::selection { background: var(--startup); color: var(--ink); }
+* { scrollbar-color: #3a3a41 transparent; scrollbar-width: thin; }
+input { caret-color: var(--startup); }
 html, body { height: 100%; }
 body {
   margin: 0; background: var(--ink); color: var(--fg); overflow: hidden;
@@ -40,12 +43,11 @@ body {
 button { font: inherit; color: inherit; }
 a { color: inherit; }
 .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
-.caps { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.14em; font-size: 12px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.caps { font: 600 12px var(--font-body); font-stretch: 112%; text-transform: uppercase; letter-spacing: 0.08em; }
 
 /* Sky */
-#sky { position: fixed; inset: 0; background:
-  radial-gradient(120% 90% at 100% 100%, var(--glow) 0%, rgba(142, 20, 20, 0.35) 32%, transparent 62%),
-  radial-gradient(60% 50% at 0% 0%, #17171a 0%, transparent 70%), var(--ink); }
+#sky { position: fixed; inset: 0; background: var(--ink); }
 #stars { position: fixed; inset: 0; width: 100%; height: 100%; }
 #map { position: fixed; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: grab; }
 #map:active { cursor: grabbing; }
@@ -69,9 +71,10 @@ h1.brand {
   font-size: clamp(18px, 3.4vw, 34px); letter-spacing: 0.02em; text-transform: uppercase; line-height: 1;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;
 }
-h1.brand small { display: block; font: 500 11px var(--font-mono); letter-spacing: 0.18em; color: var(--muted); margin-top: 8px; }
+h1.brand small { display: block; font: 500 12px var(--font-body); font-stretch: 100%; letter-spacing: 0.04em; text-transform: none; color: var(--muted); margin-top: 8px; }
 .crumbs { position: fixed; z-index: 19; left: 50%; transform: translateX(-50%); top: calc(96px + env(safe-area-inset-top, 0px)); display: flex; gap: 8px; max-width: calc(100% - 32px); }
 .pill {
+  display: inline-flex; align-items: center; gap: 6px;
   border: 1px solid var(--line); background: rgba(20, 20, 22, 0.85); border-radius: 999px; padding: 6px 14px;
   cursor: pointer; white-space: nowrap; max-width: 60vw; overflow: hidden; text-overflow: ellipsis;
 }
@@ -81,7 +84,7 @@ h1.brand small { display: block; font: 500 11px var(--font-mono); letter-spacing
 /* Map marks */
 .cluster-label { pointer-events: none; text-anchor: middle; }
 .cluster-label .name { font: 700 13px var(--font-display); font-stretch: 112%; letter-spacing: 0.12em; fill: var(--fg); text-transform: uppercase; paint-order: stroke; stroke: var(--ink); stroke-width: 4px; }
-.cluster-label .stat { font: 400 11px var(--font-mono); fill: var(--muted); paint-order: stroke; stroke: var(--ink); stroke-width: 4px; }
+.cluster-label .stat { font: 500 11px var(--font-body); fill: var(--muted); paint-order: stroke; stroke: var(--ink); stroke-width: 4px; }
 .node { cursor: pointer; }
 .node .label { font: 600 12px var(--font-body); fill: var(--fg); paint-order: stroke; stroke: var(--ink); stroke-width: 3.5px; pointer-events: none; }
 .faded { opacity: 0.12; }
@@ -97,7 +100,7 @@ h1.brand small { display: block; font: 500 11px var(--font-mono); letter-spacing
 }
 .view-toggle button {
   border: 0; background: transparent; border-radius: 999px; padding: 8px 18px; cursor: pointer;
-  font: 500 13px var(--font-mono); letter-spacing: 0.14em; text-transform: uppercase; display: inline-flex; gap: 8px; align-items: center;
+  font: 600 13px var(--font-body); display: inline-flex; gap: 8px; align-items: center;
 }
 .view-toggle button[aria-checked="true"] { background: var(--paper); color: var(--ink); }
 .view-toggle button:focus-visible { outline: 2px solid var(--fg); outline-offset: 1px; }
@@ -110,13 +113,12 @@ h1.brand small { display: block; font: 500 11px var(--font-mono); letter-spacing
 .tour-start .play { width: 30px; height: 30px; border-radius: 50%; background: var(--red); display: grid; place-items: center; }
 .tour-start .play svg { width: 12px; height: 12px; fill: var(--fg); }
 .tour-start:focus-visible { outline: 2px solid var(--fg); }
-.ticker { flex: 1; min-width: 0; overflow: hidden; mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
-.ticker-track { display: inline-flex; gap: 28px; white-space: nowrap; animation: tick 70s linear infinite; padding-left: 20px; }
-.ticker:hover .ticker-track, .ticker:focus-within .ticker-track { animation-play-state: paused; }
-.ticker button { border: 0; background: transparent; cursor: pointer; padding: 6px 0; font-size: 14px; color: var(--muted); }
-.ticker button b { color: var(--red); font: 600 13px var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; margin-right: 8px; }
-.ticker button:hover, .ticker button:focus-visible { color: var(--fg); outline: none; }
-@keyframes tick { to { transform: translateX(-50%); } }
+.ticker { flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; mask-image: linear-gradient(90deg, #000 92%, transparent); }
+.ticker::-webkit-scrollbar { display: none; }
+.ticker-track { display: inline-flex; gap: 6px; white-space: nowrap; padding-right: 32px; }
+.ticker button { border: 0; background: transparent; cursor: pointer; padding: 6px 10px; border-radius: 999px; font-size: 14px; color: var(--muted); }
+.ticker button b { color: var(--fg); font: 400 14px var(--font-mono); margin-right: 6px; }
+.ticker button:hover, .ticker button:focus-visible { color: var(--fg); background: var(--ink-3); outline: none; }
 
 /* Sheets */
 .sheet {
@@ -136,21 +138,21 @@ h1.brand small { display: block; font: 500 11px var(--font-mono); letter-spacing
 .close:hover, .close:focus-visible { background: var(--ink-3); outline: none; }
 .close svg { width: 16px; height: 16px; stroke: var(--fg); stroke-width: 2; }
 .sheet-body { overflow-y: auto; padding: 24px 20px calc(32px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 20px; align-content: start; }
-.entity-top { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 18px; align-items: start; }
-.code { font: 500 13px var(--font-mono); letter-spacing: 0.06em; display: inline-flex; gap: 8px; align-items: center; overflow-wrap: anywhere; }
-.entity-name { margin: 6px 0 12px; font: 850 clamp(28px, 4.4vw, 44px)/1.02 var(--font-display); font-stretch: 105%; letter-spacing: -0.01em; overflow-wrap: anywhere; text-wrap: balance; }
+.entity-top { display: grid; grid-template-columns: minmax(0, 1fr) 132px; gap: 20px; align-items: start; }
+.entity-name { margin: 0 0 14px; font: 850 clamp(28px, 4.4vw, 44px)/1.02 var(--font-display); font-stretch: 105%; letter-spacing: -0.01em; overflow-wrap: anywhere; text-wrap: balance; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.chip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; font: 500 12px var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; }
-.tldr { border-left: 3px solid var(--red); padding: 2px 0 2px 16px; display: grid; gap: 6px; }
-.tldr p { margin: 0; font-size: 18px; line-height: 1.45; }
-.tldr span { color: var(--muted); }
+.chip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; font: 600 13px var(--font-body); }
+.chip.data { font: 400 12px var(--font-mono); color: var(--muted); }
+.chip.gap { color: var(--red); border-color: rgba(255, 59, 48, 0.45); }
+.lead { margin: 0; font-size: 19px; line-height: 1.45; max-width: 46ch; text-wrap: pretty; }
 .actions { display: flex; flex-wrap: wrap; gap: 10px; }
-.btn { border: 1px solid var(--line); border-radius: 999px; padding: 9px 16px; background: transparent; cursor: pointer; text-decoration: none; font: 500 12px var(--font-mono); letter-spacing: 0.14em; text-transform: uppercase; }
+.btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 999px; padding: 8px 16px; background: transparent; cursor: pointer; text-decoration: none; font: 600 13px var(--font-body); }
+.btn svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; }
 .btn:hover, .btn:focus-visible { border-color: var(--fg); outline: none; }
 .btn:disabled { opacity: 0.4; cursor: default; }
-.section-title { color: var(--muted); border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+.section-title { margin: 8px 0 -6px; font: 650 15px var(--font-body); font-stretch: 105%; color: var(--fg); }
 .facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 16px; margin: 0; }
-.facts dt { color: var(--muted); font: 500 12px var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; padding-top: 2px; }
+.facts dt { color: var(--muted); font-size: 14px; }
 .facts dd { margin: 0; overflow-wrap: anywhere; }
 .prose { color: #cfcbc3; margin: 0; max-width: 62ch; }
 .note { color: var(--muted); font-size: 13px; margin: 0; }
@@ -166,30 +168,20 @@ h1.brand small { display: block; font: 500 11px var(--font-mono); letter-spacing
 .meter { grid-column: 1 / -1; height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; }
 .meter i { display: block; height: 100%; background: var(--fg); }
 
-/* Dossier card */
-.dossier {
-  position: relative; background: var(--paper); color: var(--ink); padding: 14px 12px 12px; border-radius: 3px;
-  transform: rotate(3deg); box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5); font-family: var(--font-mono);
-}
-.dossier .clip { position: absolute; top: -16px; left: 22px; width: 14px; height: 40px; border: 2px solid #8c8a86; border-radius: 8px; border-bottom-color: transparent; }
-.dossier .head { display: flex; justify-content: space-between; gap: 6px; font-size: 9px; letter-spacing: 0.12em; color: #6b675f; }
-.dossier svg { display: block; width: 100%; aspect-ratio: 1 / 1.1; margin: 8px 0; background: #1a0f10; border-radius: 2px; }
-.dossier .who { font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; overflow-wrap: anywhere; }
-.dossier .sub { font-size: 10px; color: #6b675f; }
-.stamp {
-  position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%) rotate(-12deg);
-  border: 2px solid var(--red); color: var(--red); padding: 2px 8px; font: 700 12px var(--font-mono); letter-spacing: 0.18em; white-space: nowrap; background: rgba(26, 15, 16, 0.6);
-}
-.stamp.ok { border-color: var(--verified); color: var(--verified); }
+/* Status: the entity's standing plus its neighbourhood, drawn from the same links as the map */
+.status { display: grid; gap: 8px; justify-items: center; text-align: center; }
+.status svg { width: 100%; aspect-ratio: 1; border: 1px solid var(--line); border-radius: 12px; }
+.status b { font: 800 12px/1.2 var(--font-display); font-stretch: 112%; letter-spacing: 0.06em; text-transform: uppercase; }
+.status span { font: 400 12px var(--font-mono); color: var(--muted); }
 
 /* Menu drawer */
 .drawer { right: auto; left: 0; border-left: 0; border-right: 1px solid var(--line); width: min(440px, 100%); transform: translateX(-105%); }
 .menu-group { display: grid; gap: 10px; }
-.menu-group h2 { margin: 0; font: 500 12px var(--font-mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+.menu-group h2 { margin: 0; font: 650 15px var(--font-body); font-stretch: 105%; }
 .option { display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: transparent; cursor: pointer; text-align: left; width: 100%; }
 .option[aria-pressed="true"] { border-color: var(--fg); background: var(--ink-3); }
 .option:focus-visible { outline: 2px solid var(--fg); }
-.option small { color: var(--muted); font-family: var(--font-mono); }
+.option small { color: var(--muted); font-family: var(--font-mono); font-size: 13px; }
 .range { display: grid; gap: 6px; }
 .range input { width: 100%; accent-color: var(--red); }
 .check { display: flex; gap: 10px; align-items: center; cursor: pointer; }
@@ -202,14 +194,14 @@ h1.brand small { display: block; font: 500 11px var(--font-mono); letter-spacing
 /* Lists */
 .table-wrap { overflow: auto; max-height: 360px; border: 1px solid var(--line); border-radius: 10px; }
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
-th { text-align: left; font: 500 11px var(--font-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); padding: 10px 12px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--ink-2); }
+th { text-align: left; font: 600 12px var(--font-body); color: var(--muted); padding: 10px 12px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--ink-2); }
 td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
 tr:last-child td { border-bottom: 0; }
 tbody tr { cursor: pointer; }
 tbody tr:hover td, tbody tr:focus-visible td { background: var(--ink-3); }
 tbody tr:focus-visible { outline: 2px solid var(--fg); outline-offset: -2px; }
 td.num { text-align: right; font-family: var(--font-mono); white-space: nowrap; }
-td small { display: block; color: var(--muted); font-family: var(--font-mono); font-size: 11px; }
+td small { display: block; color: var(--muted); font-size: 12px; }
 .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
 
 /* Search */
@@ -220,7 +212,7 @@ td small { display: block; color: var(--muted); font-family: var(--font-mono); f
 .results { display: grid; gap: 4px; max-height: 60vh; overflow-y: auto; }
 .result { display: flex; gap: 12px; align-items: center; padding: 10px 14px; border-radius: 10px; border: 1px solid transparent; background: transparent; cursor: pointer; text-align: left; width: 100%; }
 .result:hover, .result.active, .result:focus-visible { background: var(--ink-3); border-color: var(--line); outline: none; }
-.result span:last-child { color: var(--muted); font-family: var(--font-mono); font-size: 12px; margin-left: auto; white-space: nowrap; }
+.result span:last-child { color: var(--muted); font-size: 13px; margin-left: auto; white-space: nowrap; }
 
 /* Tour card and agent view */
 .tour-card {
@@ -230,7 +222,8 @@ td small { display: block; color: var(--muted); font-family: var(--font-mono); f
 }
 .tour-card h2 { margin: 0; font: 850 24px/1.1 var(--font-display); font-stretch: 110%; text-wrap: balance; }
 .tour-card p { margin: 0; color: #cfcbc3; }
-.tour-nav { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.tour-nav { display: flex; align-items: center; gap: 10px; }
+.tour-nav .count { font: 400 13px var(--font-mono); color: var(--muted); margin: 0 auto; }
 .agent { display: grid; gap: 12px; }
 .agent pre { margin: 0; white-space: pre-wrap; word-break: break-word; font: 400 12.5px/1.55 var(--font-mono); color: #d9d5cd; background: var(--ink-3); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
 
@@ -238,14 +231,13 @@ td small { display: block; color: var(--muted); font-family: var(--font-mono); f
   .sheet { top: auto; height: 78%; width: 100%; border-left: 0; border-top: 1px solid var(--line); border-radius: 18px 18px 0 0; transform: translateY(105%); }
   .sheet.open { transform: none; }
   .drawer { height: 100%; top: 0; bottom: 0; border-radius: 0; transform: translateX(-105%); }
-  .entity-top { grid-template-columns: minmax(0, 1fr) 110px; }
+  .entity-top { grid-template-columns: minmax(0, 1fr) 96px; }
   .crumbs { top: calc(84px + env(safe-area-inset-top, 0px)); }
   .view-toggle { bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
   .view-toggle button { padding: 7px 12px; }
   .tour-card { bottom: calc(132px + env(safe-area-inset-bottom, 0px)); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ticker-track { animation: none; }
   .sheet { transition: none; }
 }
 </style>
@@ -268,7 +260,7 @@ td small { display: block; color: var(--muted); font-family: var(--font-mono); f
 </header>
 
 <nav class="crumbs" aria-label="Breadcrumb">
-  <button class="pill caps" id="crumbMap">◂ Map</button>
+  <button class="pill" id="crumbMap"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6.5 1.5L3 5l3.5 3.5"/></svg>Map</button>
   <button class="pill light" id="crumbSel" hidden></button>
 </nav>
 
@@ -282,9 +274,9 @@ td small { display: block; color: var(--muted); font-family: var(--font-mono); f
 <div class="tourbar">
   <button class="tour-start" id="tourBtn" aria-label="Start the data tour">
     <span class="play"><svg viewBox="0 0 12 12"><path d="M3 1.5v9l7.5-4.5z"/></svg></span>
-    <span class="caps" id="tourLabel">Data tour</span>
+    <span id="tourLabel" style="font-weight:650">Data tour</span>
   </button>
-  <div class="ticker" aria-label="Key facts"><div class="ticker-track" id="ticker"></div></div>
+  <div class="ticker" aria-label="Key facts: each opens its step of the tour"><div class="ticker-track" id="ticker"></div></div>
 </div>
 
 <aside class="sheet" id="sheet" aria-labelledby="sheetKind" aria-hidden="true">
@@ -305,7 +297,7 @@ td small { display: block; color: var(--muted); font-family: var(--font-mono); f
 
 <div class="search" id="search" hidden>
   <div class="search-box" role="dialog" aria-label="Search">
-    <label class="caps" for="q" style="color:var(--muted)">Search a patent, startup or spin-off</label>
+    <label for="q" style="color:var(--muted)">Search a patent, startup or spin-off</label>
     <input id="q" type="search" autocomplete="off" placeholder="e.g. prosthesis, Pionirs, EP2526859">
     <div class="results" id="results" role="listbox"></div>
   </div>
@@ -349,7 +341,7 @@ td small { display: block; color: var(--muted); font-family: var(--font-mono); f
     let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     for (let i = 0; i < Math.round(w * h / 4200); i++) {
       const r = rnd();
-      c.fillStyle = r > 0.97 ? "rgba(255,59,48,0.8)" : r > 0.93 ? "rgba(255,178,62,0.7)" : `rgba(244,242,238,${0.15 + rnd() * 0.45})`;
+      c.fillStyle = `rgba(244,242,238,${0.12 + r * 0.38})`; // neutral: colour on this map always means data
       const s = rnd() > 0.9 ? 2 : 1;
       c.fillRect(rnd() * w, rnd() * h, s, s);
     }
@@ -451,9 +443,8 @@ td small { display: block; color: var(--muted); font-family: var(--font-mono); f
     g.attr("transform", d => `translate(${d.x},${d.y})`);
     g.select("title").text(d => d.label);
     g.select("circle.halo")
-      .attr("r", d => d.r + (d.type === "startup" && d.researchless ? 5 : 4))
-      .attr("fill", d => d.type === "startup" && d.researchless ? "none" : nodeColor(d))
-      .attr("fill-opacity", 0.2)
+      .attr("r", d => d.r + 4)
+      .attr("fill", "none")
       .attr("stroke", d => d.type === "startup" && d.researchless ? COLORS.red : "none")
       .attr("stroke-width", 1.6);
     g.select("circle.dot").attr("r", d => d.r).attr("fill", nodeColor)
@@ -580,8 +571,8 @@ td small { display: block; color: var(--muted); font-family: var(--font-mono); f
   const KIND = { patent: "Polimi patent", startup: "Startup", spinoff: "Polimi spin-off" };
   function code(n) { return { patent: "PAT", startup: "STU", spinoff: "SPN" }[n.type] + "-" + n.ref.toUpperCase().slice(0, 16); }
   function status(n) {
-    if (n.type === "patent") return n.orphan ? (n.industry ? ["Industry", "ok"] : ["Orphan", ""]) : ["Matched", "ok"];
-    if (n.type === "startup") return n.spinoff ? ["Spin-off", "ok"] : n.researchless ? ["No tie", ""] : n.noText ? ["Not read", ""] : ["Startup", "ok"];
+    if (n.type === "patent") return n.orphan ? (n.industry ? ["Industry partner", "ok"] : ["Orphan", ""]) : ["Matched", "ok"];
+    if (n.type === "startup") return n.spinoff ? ["Polimi spin-off", "ok"] : n.researchless ? ["No Polimi tie", ""] : n.noText ? ["Not compared", ""] : ["No match", "ok"];
     return ["Spin-off", "ok"];
   }
 
@@ -618,49 +609,45 @@ td small { display: block; color: var(--muted); font-family: var(--font-mono); f
   }
 
   const href = url => /^https?:/.test(url) ? url : "https://" + url;
+  const OUT = `<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2h6v6M10 2L3 9"/></svg><span class="sr-only"> (opens in a new tab)</span>`;
 
   function renderEntity(id) {
     const n = byId.get(id), L = linksOf(id);
     const [stamp, stampCls] = status(n);
-    sheetKind.innerHTML = `<i class="dotmark" style="background:${COLORS[n.type]}"></i>Entity / ${esc(KIND[n.type])}`;
+    sheetKind.innerHTML = `<i class="dotmark" style="background:${COLORS[n.type]}"></i>${esc(KIND[n.type])}`;
     if (state.agent) { sheetBody.innerHTML = agentView(n); bindAgent(); return; }
     const facts = [];
     let links = "";
     if (n.type === "patent") {
       facts.push(["Publication", `<span class="mono">${esc(n.ref)}</span>`], ["Priority", `<span class="mono">${esc(n.priority)}</span>`],
         ["IPC", `<span class="mono">${esc(n.ipcAll)}</span>`], ["Applicants", esc(n.applicants)]);
-      links = `<a class="btn" href="https://worldwide.espacenet.com/patent/search?q=pn%3D${encodeURIComponent(n.ref)}" target="_blank" rel="noopener">Espacenet ↗</a>`;
+      links = `<a class="btn" href="https://worldwide.espacenet.com/patent/search?q=pn%3D${encodeURIComponent(n.ref)}" target="_blank" rel="noopener">Espacenet${OUT}</a>`;
     } else if (n.type === "startup") {
       facts.push(["Company", esc(n.legal)], ["Based in", esc(n.place)], ["Sector", esc(n.sector)], ["Tax code", `<span class="mono">${esc(n.ref)}</span>`]);
-      if (n.website) links = `<a class="btn" href="${esc(href(n.website))}" target="_blank" rel="noopener">Site ↗</a>`;
+      if (n.website) links = `<a class="btn" href="${esc(href(n.website))}" target="_blank" rel="noopener">Website${OUT}</a>`;
     } else {
       facts.push(["Company", esc(n.legal)], ["Founded", `<span class="mono">${esc(n.founded)}</span>`]);
-      links = (n.website ? `<a class="btn" href="${esc(href(n.website))}" target="_blank" rel="noopener">Site ↗</a>` : "") +
-        `<a class="btn" href="${esc(n.evidence)}" target="_blank" rel="noopener">Polimi TTO ↗</a>`;
+      links = (n.website ? `<a class="btn" href="${esc(href(n.website))}" target="_blank" rel="noopener">Website${OUT}</a>` : "") +
+        `<a class="btn" href="${esc(n.evidence)}" target="_blank" rel="noopener">Polimi TTO page${OUT}</a>`;
     }
-    const chips = [`<span class="chip"><i class="dotmark" style="background:${COLORS[n.type]}"></i>${esc(KIND[n.type])}</span>`];
-    if (n.titleOnly) chips.push(`<span class="chip" style="color:${COLORS.red}">Title only</span>`);
+    const chips = [`<span class="chip data">${esc(code(n))}</span>`];
+    if (n.titleOnly) chips.push(`<span class="chip gap">Title only</span>`);
     if (n.industry) chips.push(`<span class="chip">Industrial partner</span>`);
     sheetBody.innerHTML = `
       <div class="entity-top">
         <div>
-          <span class="code" style="color:${COLORS.verified}"><i class="dotmark" style="background:${COLORS.verified}"></i>${esc(code(n))}</span>
           <h2 class="entity-name">${esc(n.label)}</h2>
           <div class="chips">${chips.join("")}</div>
         </div>
-        <div class="dossier" aria-hidden="true"><span class="clip"></span>
-          <div class="head"><span>FILE №</span><span>${esc(code(n).slice(0, 12))}</span></div>
-          ${miniMap(n)}<span class="stamp ${stampCls}">${esc(stamp.toUpperCase())}</span>
-          <div class="who">${esc(trim(n.label, 28))}</div><div class="sub">${L.length} link${L.length === 1 ? "" : "s"} · ≥ ${state.min.toFixed(2)}</div>
-        </div>
+        <div class="status" aria-hidden="true">${miniMap(n)}<b style="color:${stampCls ? COLORS.verified : COLORS.red}">${esc(stamp)}</b><span>${L.length} link${L.length === 1 ? "" : "s"} ≥ ${state.min.toFixed(2)}</span></div>
       </div>
-      <div class="tldr"><p>${esc(tldr(n))}</p><span class="caps">TL;DR · a summary of the facts below</span></div>
+      <p class="lead">${esc(tldr(n))}</p>
       ${links ? `<div class="actions">${links}</div>` : ""}
-      <div class="caps section-title">${L.length ? `Links (${L.length})` : "No links at this threshold"}</div>
+      <h3 class="section-title">${L.length ? `Links (${L.length})` : "No links at this threshold"}</h3>
       ${L.length ? `<div class="links">${L.map(l => linkRow(l, id)).join("")}</div>` : ""}
-      ${n.text ? `<div class="caps section-title">${n.type === "patent" ? "Abstract" : "What they do"}</div><p class="prose">${esc(n.text)}</p>` : ""}
+      ${n.text ? `<h3 class="section-title">${n.type === "patent" ? "Abstract" : "What they do"}</h3><p class="prose">${esc(n.text)}</p>` : ""}
       ${n.mt ? `<p class="note">${n.type === "patent" ? "Title" : "Text"} machine-translated from Italian.</p>` : ""}
-      <div class="caps section-title">Facts</div>
+      <h3 class="section-title">Facts</h3>
       <dl class="facts">${facts.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${v}</dd>`).join("")}</dl>`;
     sheetBody.querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => select(b.dataset.go)));
     sheetBody.scrollTop = 0;
@@ -670,7 +657,7 @@ td small { display: block; color: var(--muted); font-family: var(--font-mono); f
     const other = byId.get(l.source === id ? l.target : l.source);
     if (l.kind === "known") {
       const why = l.relation === "same_company" ? "Same company: accredited Polimi spin-off" : "Co-applicant of the Polimi patent";
-      return `<button class="link-row" data-go="${esc(other.id)}"><span class="who">${esc(other.label)}</span><span class="score" style="color:${COLORS.verified}">VERIFIED</span><span class="why">${esc(why)}</span></button>`;
+      return `<button class="link-row" data-go="${esc(other.id)}"><span class="who">${esc(other.label)}</span><span class="score" style="color:${COLORS.verified}">Verified</span><span class="why">${esc(why)}</span></button>`;
     }
     const w = Math.max(4, Math.min(100, (l.score - 0.4) / 0.3 * 100));
     return `<button class="link-row" data-go="${esc(other.id)}"><span class="who">${esc(trim(other.label, 70))}</span><span class="score">${fmt(l.score)}</span>
@@ -721,7 +708,7 @@ td small { display: block; color: var(--muted); font-family: var(--font-mono); f
     state.agent = on;
     humanBtn.setAttribute("aria-checked", String(!on)); agentBtn.setAttribute("aria-checked", String(on));
     if (state.selected) renderEntity(state.selected);
-    else if (on) { sheetKind.textContent = "Agent / Overview"; sheetBody.innerHTML = agentView(null); bindAgent(); openSheet(); }
+    else if (on) { sheetKind.textContent = "Data for agents"; sheetBody.innerHTML = agentView(null); bindAgent(); openSheet(); }
     else closeSheet();
   }
   humanBtn.addEventListener("click", () => setAgent(false));
@@ -835,7 +822,7 @@ td small { display: block; color: var(--muted); font-family: var(--font-mono); f
     { t: `${M.nStartups} Lombard medtech startups`, p: `Amber dots are innovative startups registered in Lombardy (InfoCamere list of ${M.startupList}). ${M.nStartupsText} describe themselves on their website, which is what the map reads; the rest stay dim.`, f: () => ids(n => n.type === "startup") },
     { t: "How a line is drawn", p: `A white line joins a patent and a startup whose texts are semantically close: a score of ${M.threshold} or more on a multilingual embedding model. ${nSim.length} pairs pass. Dashed lines start from patents with only a title, so they are less reliable.`, f: () => { const s = new Set(); nSim.forEach(l => { s.add(l.source); s.add(l.target); }); return s; } },
     { t: "Verified ties", p: `Green marks what public sources confirm: startups that are Polimi spin-offs, and companies that co-filed a Polimi patent. Only ${nKnown} such ties are visible in open data.`, f: () => { const s = new Set(); allLinks.filter(l => l.kind === "known").forEach(l => { s.add(l.source); s.add(l.target); }); return s; } },
-    { t: `${DATA.researchless.length} research-less startups`, p: "Red rings mark startups close to a Polimi patent with no known tie to Polimi: conversations that could start tomorrow.", f: () => new Set(DATA.researchless.map(v => "S:" + v)) },
+    { t: `${DATA.researchless.length} research-less startups`, p: "Red rings mark startups close to a Polimi patent with no known tie to Polimi. Each one is a lead for the Technology Transfer Office to check.", f: () => new Set(DATA.researchless.map(v => "S:" + v)) },
     { t: `${DATA.orphans.length} orphan technologies`, p: `Darker blue dots are patents with no spin-off and no Lombard startup within reach. ${DATA.nodes.filter(n => n.orphan && n.industry).length} of them already have an industrial co-applicant, so they are orphan only with respect to startups.`, f: () => new Set(DATA.orphans.map(p => "P:" + p)) },
     { t: "What is missing", p: "Licences and informal collaborations are mostly not public, older companies are not in the startup register, and similarity is a signal, not proof. Treat every gap as a lead to check.", f: () => null },
   ];
@@ -849,8 +836,8 @@ td small { display: block; color: var(--muted); font-family: var(--font-mono); f
     state.highlight = set; state.view = "all"; applyFocus(); updateLabels(d3.zoomTransform(svg.node()).k);
     if (set && set.size) zoomTo(set, 70); else resetZoom();
     card.hidden = false;
-    card.innerHTML = `<span class="caps" style="color:var(--red)">Step ${i + 1} of ${STEPS.length}</span><h2>${esc(s.t)}</h2><p>${esc(s.p)}</p>
-      <div class="tour-nav"><button class="btn" id="tPrev" ${i === 0 ? "disabled" : ""}>Back</button><button class="btn" id="tEnd">End</button><button class="btn" id="tNext">${i === STEPS.length - 1 ? "Finish" : "Next"}</button></div>`;
+    card.innerHTML = `<h2>${esc(s.t)}</h2><p>${esc(s.p)}</p>
+      <div class="tour-nav"><button class="btn" id="tPrev" ${i === 0 ? "disabled" : ""}>Back</button><span class="count" aria-label="Step ${i + 1} of ${STEPS.length}">${i + 1} / ${STEPS.length}</span><button class="btn" id="tEnd">End tour</button><button class="btn" id="tNext">${i === STEPS.length - 1 ? "Finish" : "Next"}</button></div>`;
     document.getElementById("tPrev").onclick = () => showStep(Math.max(0, step - 1));
     document.getElementById("tNext").onclick = () => step === STEPS.length - 1 ? stopTour(true) : showStep(step + 1);
     document.getElementById("tEnd").onclick = () => stopTour(true);
@@ -864,17 +851,16 @@ td small { display: block; color: var(--muted); font-family: var(--font-mono); f
   document.getElementById("tourBtn").addEventListener("click", () => showStep(0));
 
   const FACTS = [
-    ["Where the map starts", `${M.nPatents} Polimi medtech patents`, 0],
-    ["Who could use them", `${M.nStartups} Lombard medtech startups`, 2],
-    ["How lines are drawn", `${nSim.length} matches at ≥ ${M.threshold}`, 3],
-    ["What is verified", `${nKnown} public ties`, 4],
-    ["The opportunity", `${DATA.researchless.length} startups near Polimi research with no tie`, 5],
-    ["The gap", `${DATA.orphans.length} technologies with no startup in reach`, 6],
-    ["Read with care", "what open data cannot show", 7],
+    [M.nPatents, "Polimi medtech patents", 0],
+    [M.nStartups, "Lombard medtech startups", 2],
+    [nSim.length, `matches at ≥ ${M.threshold}`, 3],
+    [nKnown, "verified ties", 4],
+    [DATA.researchless.length, "startups near Polimi research, no tie", 5],
+    [DATA.orphans.length, "patents with no startup in reach", 6],
+    ["", "Limits of open data", 7],
   ];
-  const tick = FACTS.map(([h, t, s]) => `<button data-step="${s}"><b>${esc(h)}</b>${esc(t)}</button>`).join("");
   const track = document.getElementById("ticker");
-  track.innerHTML = tick + tick.replace(/<button /g, '<button tabindex="-1" aria-hidden="true" ');
+  track.innerHTML = FACTS.map(([v, t, n]) => `<button data-step="${n}">${v !== "" ? `<b>${esc(v)}</b>` : ""}${esc(t)}</button>`).join("");
   track.querySelectorAll("[data-step]").forEach(b => b.addEventListener("click", () => showStep(+b.dataset.step)));
 
   // ---------- keyboard ----------
