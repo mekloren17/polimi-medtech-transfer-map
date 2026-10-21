@@ -1,7 +1,8 @@
 """Score patent-startup similarity and write data/processed/edges_similarity.csv.
 
 Cosine similarity between every patent and every startup embedding
-(src/embed/embed.py). Pairs at or above `similarity.threshold` (config.yaml) become edges.
+(src/embed/embed.py). Pairs at or above `similarity.threshold` (config.yaml) become edges,
+keeping at most `similarity.max_links_per_patent` startups per patent (the closest ones).
 
 Each edge gets `top_terms`: single words and two-word phrases taken from either text that
 are closest to BOTH texts (score = min of the two cosine similarities, computed with the
@@ -94,7 +95,14 @@ def main():
                                         names + ". " + startups["id"].map(descs))
 
     sim = P @ S.T  # vectors are L2-normalised
-    pi, si = np.nonzero(sim >= threshold)
+    # Keep pairs at or above the threshold, and at most N startups per patent (its closest ones)
+    max_per = cfg["similarity"].get("max_links_per_patent")
+    keep = sim >= threshold
+    if max_per:
+        rank = (-sim).argsort(axis=1).argsort(axis=1)  # 0 = closest startup for each patent
+        n_cut = int((keep & (rank >= max_per)).sum())
+        keep &= rank < max_per
+    pi, si = np.nonzero(keep)
 
     # Term embeddings, only for texts that take part in an edge
     model = SentenceTransformer(model_name)
@@ -144,6 +152,8 @@ def main():
     q = np.quantile(flat, [0.5, 0.9, 0.99, 0.999])
     print(f"patents x startups:        {sim.shape[0]} x {sim.shape[1]} = {flat.size} pairs")
     print(f"score quantiles 50/90/99/99.9%: {' / '.join(f'{x:.3f}' for x in q)}   max {flat.max():.3f}")
+    if max_per:
+        print(f"dropped by the {max_per}-per-patent cap: {n_cut}")
     print(f"edges >= {threshold}:             {len(edges)}  (low confidence, title only: {edges['low_confidence'].sum()})")
     print(f"patents with an edge:      {len(set(pi))} / {len(patents)}")
     print(f"startups with an edge:     {len(set(si))} / {len(startups)}")
