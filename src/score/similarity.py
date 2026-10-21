@@ -77,6 +77,22 @@ def main():
 
     text_source = pd.read_csv("data/processed/patents.csv", dtype=str).set_index("patent_id")["text_source"]
 
+    # Explanatory terms are taken from the English texts (machine translations where the
+    # original is Italian, src/clean/translate_en.py) so the site reads in one language.
+    # Scores still come from the original texts.
+    term_text_p, term_text_s = patents["text"].copy(), startups["text"].copy()
+    translations = Path("data/processed/translations_en.csv")
+    if translations.exists():
+        tr = pd.read_csv(translations, dtype=str, keep_default_na=False)
+        titles = tr[tr["kind"] == "patent_title"].set_index("key")["text_en"]
+        descs = tr[tr["kind"] == "startup_description"].set_index("key")["text_en"]
+        title_only = patents["id"].map(text_source) == "title"
+        term_text_p = term_text_p.where(~(title_only & patents["id"].isin(titles.index)),
+                                        patents["id"].map(titles))
+        names = startups["text"].str.split(". ", n=1).str[0]
+        term_text_s = term_text_s.where(~startups["id"].isin(descs.index),
+                                        names + ". " + startups["id"].map(descs))
+
     sim = P @ S.T  # vectors are L2-normalised
     pi, si = np.nonzero(sim >= threshold)
 
@@ -84,9 +100,9 @@ def main():
     model = SentenceTransformer(model_name)
     terms_of = {}
     for i in set(pi):
-        terms_of[("p", i)] = candidate_terms(patents["text"].iloc[i])
+        terms_of[("p", i)] = candidate_terms(term_text_p.iloc[i])
     for j in set(si):
-        terms_of[("s", j)] = candidate_terms(startups["text"].iloc[j])
+        terms_of[("s", j)] = candidate_terms(term_text_s.iloc[j])
     vocab = sorted(set().union(*terms_of.values())) if terms_of else []
     T = model.encode(vocab, batch_size=128, normalize_embeddings=True) if vocab else np.empty((0, P.shape[1]))
     index = {t: k for k, t in enumerate(vocab)}
