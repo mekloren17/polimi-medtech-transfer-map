@@ -163,7 +163,9 @@ def registry_counts(cfg):
         return {}
     raw = pd.read_csv(csvs[-1], sep="|", encoding="latin-1", dtype=str, keep_default_na=False)
     region = raw[[c for c in raw.columns if c.strip() == "regione"][0]].str.strip()
-    return {"nItaly": len(raw), "nRegion": int(region.str.casefold().eq(cfg["startups"]["region"].casefold()).sum())}
+    regions = [r.casefold() for r in cfg["startups"].get("regions") or []]
+    n_scope = int(region.str.casefold().isin(regions).sum()) if regions else len(raw)
+    return {"nItaly": len(raw), "nRegion": n_scope}
 
 
 def calibration(sim):

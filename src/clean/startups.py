@@ -1,8 +1,8 @@
-"""Build data/processed/startups.csv: Lombard medtech innovative startups.
+"""Build data/processed/startups.csv: Italian medtech innovative startups.
 
 Input: the newest data/raw/startups/startup_DDMMYYYY.csv (see src/collect/startups.py).
 Filters, all set in config.yaml:
-  1. region == Lombardia
+  1. region in `regions` (an empty list keeps the whole of Italy)
   2. medtech = ATECO class in `ateco_codes` OR a keyword in the text (name + description)
 
 The open-data list has no business description: only name, ATECO code and its division
@@ -35,6 +35,17 @@ EMAIL = re.compile(r"\S+@\S+\.\w+")
 PHONE = re.compile(r"(?:\+\d{2}[ .]?)?\b[03]\d[\d .\-/]{6,}\d")
 SPINOFFS = Path("data/processed/spinoffs.csv")  # src/clean/spinoffs.py, for is_polimi_spinoff
 OUT = Path("data/processed/startups.csv")
+
+# ISTAT macro-areas (NUTS 1), keyed by region names as written in the register
+MACRO_AREA = {
+    "PIEMONTE": "North-West", "VALLE D'AOSTA": "North-West", "LIGURIA": "North-West", "LOMBARDIA": "North-West",
+    "TRENTINO-ALTO ADIGE": "North-East", "VENETO": "North-East", "FRIULI-VENEZIA GIULIA": "North-East",
+    "EMILIA-ROMAGNA": "North-East",
+    "TOSCANA": "Centre", "UMBRIA": "Centre", "MARCHE": "Centre", "LAZIO": "Centre",
+    "ABRUZZO": "South", "MOLISE": "South", "CAMPANIA": "South", "PUGLIA": "South", "BASILICATA": "South",
+    "CALABRIA": "South",
+    "SICILIA": "Islands", "SARDEGNA": "Islands",
+}
 
 COLUMNS = {
     "denominazione": "name",
@@ -124,8 +135,13 @@ def main():
     df["description"] = df["description"].map(scrub)
 
     n_italy = len(df)
-    df = df[df["region"].str.casefold() == cfg["region"].casefold()].copy()
+    regions = [r.casefold() for r in cfg.get("regions") or []]
+    if regions:
+        df = df[df["region"].str.casefold().isin(regions)]
+    df = df.copy()
     n_region = len(df)
+    df["macro_area"] = df["region"].str.upper().map(MACRO_AREA).fillna("")
+    df["region"] = df["region"].str.title()
 
     by_ateco = df["ateco"].str[:5].isin(cfg["ateco_codes"])
     pattern = keyword_pattern(cfg["keywords"])
@@ -146,7 +162,7 @@ def main():
     df["list_date"] = list_date
     out = df[by_ateco | by_keyword].sort_values("name")
     out = out[[
-        "vat_number", "name", "municipality", "province", "ateco", "ateco_division", "founded",
+        "vat_number", "name", "municipality", "province", "region", "macro_area", "ateco", "ateco_division", "founded",
         "description", "description_source", "is_polimi_spinoff", "website", "owns_patents",
         "match_reason", "matched_keywords", "registered_startup", "list_date",
     ]]
@@ -156,12 +172,13 @@ def main():
     n_desc = (df["description"] != "").sum()
     print(f"source list:              {path.name} ({list_date})")
     print(f"startups in Italy:        {n_italy}")
-    print(f"in {cfg['region']}:            {n_region}")
+    print(f"in scope ({', '.join(cfg.get('regions') or []) or 'all of Italy'}): {n_region}")
     print(f"  with description:       {n_desc}")
     print(f"  ATECO {'/'.join(cfg['ateco_codes'])}:       {by_ateco.sum()}")
     print(f"  keyword match:          {by_keyword.sum()}  (on {'name + description' if n_desc else 'name only'})")
     print(f"  ATECO and keyword:      {(by_ateco & by_keyword).sum()}")
     print(f"medtech (union):          {len(out)} -> {OUT}")
+    print(f"by macro-area:            {out['macro_area'].value_counts().to_dict()}")
     print("\ntop ATECO divisions among keyword-only matches:")
     print(df.loc[by_keyword & ~by_ateco, "ateco_division"].value_counts().head(8).to_string())
     if args.sample:

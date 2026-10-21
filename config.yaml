@@ -6,7 +6,9 @@ patents:
   ipc_classes: [A61B, A61F, A61L, A61M, A61N, G16H]
 
 startups:
-  region: Lombardia
+  # Regions to keep, named as in the InfoCamere register (e.g. [Lombardia]).
+  # An empty list keeps the whole of Italy.
+  regions: []
   # ATECO 2007 classes kept regardless of description
   ateco_codes: ["32.50", "26.60"]
   # ATECO divisions (first two digits) where medtech companies plausibly register

@@ -2,13 +2,13 @@
 
 Outputs:
   data/processed/orphan_technologies.csv
-      Patents with no known link to a spin-off or startup (edges_known) and no Lombard
+      Patents with no known link to a spin-off or startup (edges_known) and no Italian
       startup at or above the similarity threshold. Sorted by best score, so the top rows
       are near misses and the bottom rows the most isolated technologies.
       `industry_co_applicants` lists company co-applicants (e.g. a medical device maker):
       those technologies are not orphan in the transfer sense, only unmatched to startups.
   data/processed/researchless_startups.csv
-      Lombard startups with at least one patent at or above the threshold but no known link
+      Italian startups with at least one patent at or above the threshold but no known link
       to Polimi (not a Polimi spin-off, not a co-applicant of a Polimi patent).
       `only_low_confidence` is True when every match comes from a title-only patent.
 

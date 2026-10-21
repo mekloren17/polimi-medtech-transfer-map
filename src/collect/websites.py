@@ -1,7 +1,7 @@
-"""Collect a short description of each candidate Lombard startup from its own homepage.
+"""Collect a short description of each candidate Italian startup from its own homepage.
 
 The open-data startup list has no business description, only a website. For every
-Lombard startup in a candidate ATECO division (config.yaml) we fetch the homepage only,
+startup in scope (config.yaml regions) in a candidate ATECO division (config.yaml) we fetch the homepage only,
 after checking robots.txt for our user agent, and keep:
 title, meta description, og:description, page language and the first paragraphs of text.
 
@@ -38,7 +38,9 @@ def load_candidates(cfg):
     df = pd.read_csv(csvs[-1], sep="|", encoding="latin-1", dtype=str, keep_default_na=False)
     df.columns = [c.strip() for c in df.columns]
     df = df.apply(lambda s: s.str.strip())
-    df = df[df["regione"].str.casefold() == cfg["region"].casefold()]
+    regions = [r.casefold() for r in cfg.get("regions") or []]  # empty: whole of Italy
+    if regions:
+        df = df[df["regione"].str.casefold().isin(regions)]
     ateco = df["ateco 2007"]
     is_candidate = ateco.str[:2].isin(cfg["candidate_ateco_divisions"]) | (
         (ateco.str[:2] + "." + ateco.str[2:4]).isin(cfg["ateco_codes"])
