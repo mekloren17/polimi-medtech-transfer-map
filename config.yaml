@@ -102,3 +102,8 @@ similarity:
   # Best F1 on the calibration pairs (src/score/calibrate.py report): about 0.47 precision,
   # 0.74 recall. Provisional: the labels are a draft still to be reviewed.
   threshold: 0.55
+
+site:
+  # Public GitHub repository linked from the "Reproduce it" section of the site.
+  # Leave empty until the repository is published.
+  repo_url: ""

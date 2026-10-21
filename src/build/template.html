@@ -253,7 +253,6 @@ td small { display: block; color: var(--muted); font-size: 12px; }
 .limits li { font-size: 16px; line-height: 1.55; color: #cfcbc3; padding-left: 18px; position: relative; max-width: 60ch; }
 .limits li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 6px; height: 6px; border-radius: 50%; background: var(--red); }
 .limits b { color: var(--fg); }
-.report pre { margin: 16px 0 0; overflow-x: auto; background: var(--ink-2); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; font: 400 13px/1.7 var(--font-mono); color: #d9d5cd; }
 .report footer { color: var(--muted); font-size: 14px; border-top: 1px solid var(--line); padding-top: 24px; }
 
 @media (max-width: 700px) {
@@ -952,15 +951,10 @@ td small { display: block; color: var(--muted); font-size: 12px; }
 
       <section aria-labelledby="hRepro">
         <h3 id="hRepro">Reproduce it</h3>
-        <p>Every step is a script that can be rerun from scratch. Raw downloads stay out of the repository; the processed tables, the manual calibration labels and this page are versioned. Only organisations are published, never inventors or founders.</p>
-        <pre><code>python src/collect/epo_ops.py          # patent abstracts (EPO OPS)
-python src/collect/startups.py --zip startup.zip
-python src/collect/websites.py         # startup homepages
-python src/collect/polimi_spinoffs.py
-python src/clean/startups.py &amp;&amp; python src/clean/spinoffs.py &amp;&amp; python src/clean/edges_known.py
-python src/clean/translate_en.py
-python src/embed/embed.py &amp;&amp; python src/score/similarity.py &amp;&amp; python src/score/gaps.py
-python src/build/site.py</code></pre>
+        <p>Code, processed data, the hand-labelled calibration pairs and this page are open. Every step is a script that can be rerun from scratch; only organisations are published, never inventors or founders.</p>
+        ${M.repoUrl
+          ? `<div class="actions" style="margin-top:20px"><a class="btn" href="${esc(M.repoUrl)}" target="_blank" rel="noopener">View the project on GitHub${OUT}</a></div>`
+          : `<p class="note" style="margin-top:14px">The public repository is being prepared.</p>`}
       </section>
 
       <footer>Built ${esc(M.built)} · threshold ${esc(M.threshold)} · ${esc(M.model)}</footer>`;

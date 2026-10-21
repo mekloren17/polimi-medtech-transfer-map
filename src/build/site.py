@@ -138,6 +138,7 @@ def build_data():
         "researchless": researchless["vat_number"].tolist(),
         "meta": {
             "threshold": cfg["similarity"]["threshold"],
+            "repoUrl": (cfg.get("site") or {}).get("repo_url") or "",
             "model": cfg["embedding"]["model"],
             "startupList": startups["list_date"].iloc[0] if len(startups) else "",
             "built": date.today().isoformat(),
