@@ -257,6 +257,7 @@ td small { display: block; color: var(--muted); font-size: 12px; }
 .sub-h { margin: 0 0 16px; font: 700 17px var(--font-body); color: var(--muted); }
 .limits + .sub-h { margin-top: 36px; }
 .report footer { color: var(--muted); font-size: 14px; border-top: 1px solid var(--line); padding-top: 24px; }
+.report footer p { margin: 0 0 6px; }
 
 @media (max-width: 700px) {
   .sheet { top: auto; height: 78%; width: 100%; border-left: 0; border-top: 1px solid var(--line); border-radius: 18px 18px 0 0; transform: translateY(105%); }
@@ -794,6 +795,7 @@ td small { display: block; color: var(--muted); font-size: 12px; }
       <div class="menu-group"><h2>Sources</h2>
         <p class="note">Patents: Polimi applications in IPC A61B, A61F, A61L, A61M, A61N, G16H (Espacenet), abstracts from EPO Open Patent Services. Startups: InfoCamere register of innovative startups (list of ${esc(M.startupList)}), __SCOPE_PLACE__, ATECO 32.50 / 26.60 or medtech keywords; descriptions from each company's homepage, Italian texts machine-translated (Helsinki-NLP opus-mt-it-en). Spin-offs: Polimi Technology Transfer Office public list (${M.nSpinoffsListed} listed).</p>
         <p class="note">Similarity: cosine between multilingual sentence embeddings (<span class="mono">${esc(M.model)}</span>), threshold ${M.threshold} calibrated on hand-labelled pairs (precision ${M.calPrecision ?? "–"}, recall ${M.calRecall ?? "–"}). Only organisations are shown. Built ${esc(M.built)}.</p>
+        <p class="note">Independent research project, not affiliated with or endorsed by Politecnico di Milano.</p>
       </div>`;
     menuBody.querySelectorAll("[data-view]").forEach(b => b.addEventListener("click", () => { setView(b.dataset.view); renderMenu(); }));
     menuBody.querySelectorAll("[data-tab]").forEach(b => b.addEventListener("click", () => { listTab = b.dataset.tab; renderMenu(); }));
@@ -995,7 +997,7 @@ td small { display: block; color: var(--muted); font-size: 12px; }
           : `<p class="note" style="margin-top:14px">The public repository is being prepared.</p>`}
       </section>
 
-      <footer>Built ${esc(M.built)} · threshold ${esc(M.threshold)} · ${esc(M.model)}</footer>`;
+      <footer><p>Independent research project, not affiliated with or endorsed by Politecnico di Milano. Links are candidates for review, not statements about any company.</p><p>Built ${esc(M.built)} · threshold ${esc(M.threshold)} · ${esc(M.model)}</p></footer>`;
 
     document.querySelectorAll("#reportBody tr[data-go]").forEach(tr => {
       const go = () => select(tr.dataset.go);
