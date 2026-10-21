@@ -1,0 +1,454 @@
+<title>Polimi MedTech Transfer Map</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+/* Layout: masthead with figures, then map (graph + detail panel), then the two gap registers. */
+:root {
+  --bg: #f3f5f4;
+  --surface: #ffffff;
+  --fg: #17212b;
+  --muted: #5b6672;
+  --line: #d5dbdf;
+  --patent: #0e6b70;
+  --startup: #b8611f;
+  --spinoff: #6a4c9c;
+  --known: #17212b;
+  --low: #9aa3ab;
+  --flag-bg: #fbeee2;
+  --flag-fg: #8a4513;
+  --ok-bg: #e2f0ef;
+  --ok-fg: #0b5357;
+  --font-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161b; --surface: #181f26; --fg: #e3e8ec; --muted: #9aa6b1; --line: #2b353f;
+    --patent: #4fb2b6; --startup: #e3955a; --spinoff: #a88bd9; --known: #e3e8ec; --low: #5f6a74;
+    --flag-bg: #3a2717; --flag-fg: #f0b583; --ok-bg: #15302f; --ok-fg: #8fd3d5;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161b; --surface: #181f26; --fg: #e3e8ec; --muted: #9aa6b1; --line: #2b353f;
+  --patent: #4fb2b6; --startup: #e3955a; --spinoff: #a88bd9; --known: #e3e8ec; --low: #5f6a74;
+  --flag-bg: #3a2717; --flag-fg: #f0b583; --ok-bg: #15302f; --ok-fg: #8fd3d5;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font: 16px/1.5 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 48px;
+}
+.wrap { max-width: 1240px; margin: 0 auto; display: grid; gap: 28px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(28px, 4.2vw, 44px); font-weight: 800; font-stretch: 80%; letter-spacing: -0.01em; line-height: 1.05; }
+h2 { font-size: 22px; font-weight: 700; font-stretch: 85%; }
+h3 { font-size: 17px; font-weight: 700; font-stretch: 90%; line-height: 1.25; }
+p { margin: 0; }
+a { color: var(--patent); }
+.mono { font-family: var(--font-data); font-size: 0.86em; font-variant-numeric: tabular-nums; }
+.eyebrow { font-family: var(--font-data); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.muted { color: var(--muted); }
+
+/* Masthead */
+.masthead { display: grid; gap: 14px; }
+.lede { max-width: 68ch; color: var(--muted); }
+.figures { display: flex; flex-wrap: wrap; gap: 10px 28px; border-top: 1px solid var(--line); padding-top: 14px; }
+.figure { display: grid; gap: 0; min-width: 0; }
+.figure b { font-family: var(--font-display); font-size: 28px; font-weight: 700; font-stretch: 80%; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.figure span { font-size: 13px; color: var(--muted); }
+.figure.gap b { color: var(--startup); }
+
+/* Map */
+.map { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.stage { position: relative; min-width: 0; border-right: 1px solid var(--line); }
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; padding: 12px 16px; border-bottom: 1px solid var(--line); font-size: 14px; }
+.controls label { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.controls input[type=range] { width: 130px; accent-color: var(--patent); }
+.controls input[type=checkbox] { accent-color: var(--patent); width: 16px; height: 16px; }
+#graph { display: block; width: 100%; height: 560px; touch-action: none; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--muted); padding: 10px 16px; border-top: 1px solid var(--line); }
+.legend i { display: inline-block; width: 10px; height: 10px; margin-right: 5px; vertical-align: -1px; }
+.lg-patent { background: var(--patent); }
+.lg-startup { background: var(--startup); border-radius: 50%; }
+.lg-spinoff { background: var(--spinoff); transform: rotate(45deg) scale(0.85); }
+.lg-ring { border: 2px solid var(--startup); border-radius: 50%; background: transparent; }
+.lg-known { width: 18px !important; height: 0 !important; border-top: 2px solid var(--known); }
+.lg-low { width: 18px !important; height: 0 !important; border-top: 2px dashed var(--low); }
+.node { cursor: pointer; }
+.node text { font: 500 11px var(--font-body); fill: var(--fg); paint-order: stroke; stroke: var(--surface); stroke-width: 3px; pointer-events: none; }
+.node.dim { opacity: 0.18; }
+.link.dim { opacity: 0.08; }
+.node:focus-visible { outline: none; }
+.node:focus-visible .shape { stroke: var(--fg); stroke-width: 3; }
+
+/* Detail panel */
+.panel { padding: 18px; display: grid; gap: 14px; align-content: start; max-height: 619px; overflow-y: auto; min-width: 0; }
+.panel h3 { overflow-wrap: anywhere; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: 500 12px var(--font-data); padding: 2px 7px; border-radius: 3px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); }
+.chip.flag { background: var(--flag-bg); color: var(--flag-fg); border-color: transparent; }
+.chip.ok { background: var(--ok-bg); color: var(--ok-fg); border-color: transparent; }
+.kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 12px; font-size: 14px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; overflow-wrap: anywhere; }
+.matches { display: grid; gap: 8px; }
+.match { display: grid; gap: 3px; padding: 10px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); cursor: pointer; text-align: left; font: inherit; color: inherit; width: 100%; }
+.match:hover, .match:focus-visible { border-color: var(--muted); outline: none; }
+.match .row { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.match .terms { font-size: 13px; color: var(--muted); }
+.bar { height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.bar > span { display: block; height: 100%; background: var(--patent); }
+.text { font-size: 14px; color: var(--muted); }
+
+/* Gap registers */
+.gaps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
+.register { display: grid; gap: 10px; align-content: start; min-width: 0; }
+.register header { display: grid; gap: 6px; }
+.register .opts { font-size: 14px; display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.register .opts label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+.tablebox { overflow-x: auto; max-height: 560px; overflow-y: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th { position: sticky; top: 0; background: var(--surface); text-align: left; font: 500 11px var(--font-data); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding: 9px 10px; border-bottom: 1px solid var(--line); z-index: 1; }
+td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+tbody tr { cursor: pointer; }
+tbody tr:hover td, tbody tr:focus-visible td { background: var(--bg); }
+tbody tr:focus-visible { outline: 2px solid var(--patent); outline-offset: -2px; }
+td.num { text-align: right; white-space: nowrap; font-family: var(--font-data); font-variant-numeric: tabular-nums; font-size: 13px; }
+td .sub { display: block; font-size: 12px; color: var(--muted); font-family: var(--font-data); }
+
+.method { display: grid; gap: 8px; font-size: 14px; color: var(--muted); max-width: 80ch; border-top: 1px solid var(--line); padding-top: 16px; }
+
+@media (max-width: 900px) {
+  .map { grid-template-columns: minmax(0, 1fr); }
+  .stage { border-right: 0; border-bottom: 1px solid var(--line); }
+  .panel { max-height: none; }
+  .gaps { grid-template-columns: minmax(0, 1fr); }
+  #graph { height: 440px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<!--/HEAD-->
+<div class="wrap">
+  <header class="masthead">
+    <span class="eyebrow">Politecnico di Milano → Lombard medtech startups</span>
+    <h1>Polimi MedTech Transfer Map</h1>
+    <p class="lede">Which Polimi medical technologies have no startup close to them, and which Lombard startups work near a Polimi patent without a known link. Links are semantic similarity between patent abstracts and startup descriptions, plus verified ties (spin-offs, co-applicants).</p>
+    <div class="figures" id="figures"></div>
+  </header>
+
+  <section class="map" aria-label="Transfer map">
+    <div class="stage">
+      <div class="controls">
+        <label for="minScore">Min. similarity <input id="minScore" type="range" step="0.01"> <span class="mono" id="minScoreOut"></span></label>
+        <label for="hideLow"><input id="hideLow" type="checkbox"> Hide title-only matches</label>
+        <label for="showIsolated"><input id="showIsolated" type="checkbox"> Show unmatched nodes</label>
+      </div>
+      <svg id="graph" role="img" aria-label="Network of Polimi patents, startups and spin-offs"></svg>
+      <div class="legend">
+        <span><i class="lg-patent"></i>Polimi patent</span>
+        <span><i class="lg-startup"></i>Startup</span>
+        <span><i class="lg-ring"></i>Research-less startup</span>
+        <span><i class="lg-spinoff"></i>Polimi spin-off</span>
+        <span><i class="lg-known"></i>Known link</span>
+        <span><i class="lg-low"></i>Title-only match</span>
+      </div>
+    </div>
+    <aside class="panel" id="panel" aria-live="polite"></aside>
+  </section>
+
+  <section class="gaps">
+    <div class="register">
+      <header>
+        <h2>Orphan technologies</h2>
+        <p class="muted">Patents with no known spin-off or startup link and no Lombard startup at or above the similarity threshold. Highest best-score first: the top rows are near misses.</p>
+        <div class="opts">
+          <label for="hideIndustry"><input id="hideIndustry" type="checkbox"> Hide patents with an industrial co-applicant</label>
+        </div>
+      </header>
+      <div class="tablebox"><table>
+        <thead><tr><th>Patent</th><th>IPC</th><th>Closest startup</th><th style="text-align:right">Best</th></tr></thead>
+        <tbody id="orphanRows"></tbody>
+      </table></div>
+    </div>
+    <div class="register">
+      <header>
+        <h2>Research-less startups</h2>
+        <p class="muted">Lombard startups with at least one Polimi patent at or above the threshold and no known tie to Polimi. Title-only matches are listed last.</p>
+      </header>
+      <div class="tablebox"><table>
+        <thead><tr><th>Startup</th><th>Closest Polimi patent</th><th style="text-align:right">Score</th></tr></thead>
+        <tbody id="rlRows"></tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <footer class="method" id="method"></footer>
+</div>
+
+<script id="data" type="application/json">__DATA__</script>
+<script>
+(function () {
+  const DATA = JSON.parse(document.getElementById("data").textContent);
+  const M = DATA.meta;
+  const byId = new Map(DATA.nodes.map(n => [n.id, n]));
+  const simScores = DATA.links.filter(l => l.kind === "similarity").map(l => l.score);
+  const maxScore = simScores.length ? Math.max(...simScores) : M.threshold;
+  const state = { min: M.threshold, hideLow: false, showIsolated: false, selected: null };
+  const fmt = v => v == null ? "–" : v.toFixed(3);
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+  // Figures
+  const nSim = DATA.links.filter(l => l.kind === "similarity");
+  const figures = [
+    [M.nPatents, "Polimi medtech patents"],
+    [M.nStartups, `Lombard medtech startups (${M.nStartupsText} with a description)`],
+    [nSim.length, `matches ≥ ${M.threshold} (${nSim.filter(l => l.low).length} title-only)`],
+    [DATA.links.filter(l => l.kind === "known").length, "known links"],
+    [DATA.orphans.length, "orphan technologies", "gap"],
+    [DATA.researchless.length, "research-less startups", "gap"],
+  ];
+  document.getElementById("figures").innerHTML = figures.map(([v, t, c]) =>
+    `<div class="figure ${c || ""}"><b>${v}</b><span>${esc(t)}</span></div>`).join("");
+
+  // Controls
+  const minScore = document.getElementById("minScore");
+  minScore.min = M.threshold; minScore.max = Math.max(M.threshold, Math.floor(maxScore * 100) / 100); minScore.value = M.threshold;
+  const out = document.getElementById("minScoreOut");
+  out.textContent = Number(minScore.value).toFixed(2);
+  minScore.addEventListener("input", () => { state.min = +minScore.value; out.textContent = state.min.toFixed(2); draw(); });
+  document.getElementById("hideLow").addEventListener("change", e => { state.hideLow = e.target.checked; draw(); });
+  document.getElementById("showIsolated").addEventListener("change", e => { state.showIsolated = e.target.checked; draw(); });
+
+  // Graph
+  const svg = d3.select("#graph");
+  const root = svg.append("g");
+  const linkLayer = root.append("g");
+  const nodeLayer = root.append("g");
+  svg.call(d3.zoom().scaleExtent([0.3, 4]).on("zoom", e => root.attr("transform", e.transform)));
+  svg.on("click", e => { if (e.target === svg.node()) select(null); });
+  let sim = null;
+  const positions = new Map();
+
+  function visibleLinks() {
+    return DATA.links.filter(l => l.kind === "known" || (l.score >= state.min - 1e-9 && !(state.hideLow && l.low)));
+  }
+
+  function shape(sel) {
+    sel.each(function (d) {
+      const g = d3.select(this);
+      if (d.type === "patent") g.append("rect").attr("class", "shape").attr("x", -6).attr("y", -6).attr("width", 12).attr("height", 12).attr("rx", 1.5);
+      else if (d.type === "spinoff") g.append("rect").attr("class", "shape").attr("x", -6).attr("y", -6).attr("width", 12).attr("height", 12).attr("transform", "rotate(45)");
+      else {
+        if (d.researchless) g.append("circle").attr("class", "ring").attr("r", 11).attr("fill", "none").attr("stroke-width", 2);
+        g.append("circle").attr("class", "shape").attr("r", 7);
+      }
+    });
+  }
+
+  function colors() {
+    const c = { patent: css("--patent"), startup: css("--startup"), spinoff: css("--spinoff"), known: css("--known"), low: css("--low"), surface: css("--surface") };
+    nodeLayer.selectAll(".shape").attr("fill", d => c[d.type]).attr("stroke", c.surface).attr("stroke-width", 1.5);
+    nodeLayer.selectAll(".ring").attr("stroke", c.startup);
+    linkLayer.selectAll("line")
+      .attr("stroke", d => d.kind === "known" ? c.known : d.low ? c.low : c.patent);
+  }
+
+  function draw() {
+    const links = visibleLinks().map(l => ({ ...l }));
+    const degree = new Map();
+    links.forEach(l => { degree.set(l.source, (degree.get(l.source) || 0) + 1); degree.set(l.target, (degree.get(l.target) || 0) + 1); });
+    const nodes = DATA.nodes.filter(n => state.showIsolated ? !(n.type === "startup" && n.noText) : degree.has(n.id));
+    const W = svg.node().clientWidth || 800, H = svg.node().clientHeight || 560;
+    svg.attr("viewBox", [0, 0, W, H]);
+    nodes.forEach(n => {
+      const p = positions.get(n.id);
+      n.x = p ? p.x : W / 2 + (Math.random() - 0.5) * W * 0.6;
+      n.y = p ? p.y : H / 2 + (Math.random() - 0.5) * H * 0.6;
+      n.deg = degree.get(n.id) || 0;
+    });
+
+    const line = linkLayer.selectAll("line").data(links, d => d.source + ">" + d.target)
+      .join("line").attr("class", "link")
+      .attr("stroke-width", d => d.kind === "known" ? 2 : 1 + (d.score - M.threshold) * 40)
+      .attr("stroke-dasharray", d => d.low ? "4 3" : null)
+      .attr("stroke-opacity", 0.75);
+
+    const node = nodeLayer.selectAll("g.node").data(nodes, d => d.id)
+      .join(enter => {
+        const g = enter.append("g").attr("class", "node").attr("tabindex", 0).attr("role", "button");
+        shape(g);
+        g.append("text").attr("x", 11).attr("y", 4);
+        g.on("click", (e, d) => { e.stopPropagation(); select(d.id); })
+         .on("keydown", (e, d) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(d.id); } });
+        g.append("title");
+        return g;
+      });
+    node.attr("aria-label", d => `${d.type}: ${d.label}`);
+    node.select("title").text(d => d.label);
+    node.select("text").text(d => (d.deg >= 2 || d.type !== "patent") && d.deg > 0 ? trim(d.label, d.type === "patent" ? 34 : 22) : "");
+    colors();
+
+    if (sim) sim.stop();
+    sim = d3.forceSimulation(nodes)
+      .force("link", d3.forceLink(links).id(d => d.id).distance(d => d.kind === "known" ? 40 : 70).strength(0.6))
+      .force("charge", d3.forceManyBody().strength(d => d.deg ? -160 : -18))
+      .force("x", d3.forceX(W / 2).strength(d => d.deg ? 0.09 : 0.03))
+      .force("y", d3.forceY(H / 2).strength(d => d.deg ? 0.13 : 0.05))
+      .force("collide", d3.forceCollide(d => d.deg ? 16 : 8))
+      .on("tick", () => {
+        // Keep nodes inside the drawing; labels extend to the right, so leave more room there
+        nodes.forEach(n => { n.x = Math.max(14, Math.min(W - 110, n.x)); n.y = Math.max(14, Math.min(H - 14, n.y)); });
+        line.attr("x1", d => d.source.x).attr("y1", d => d.source.y).attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+        node.attr("transform", d => `translate(${d.x},${d.y})`);
+      })
+      .on("end", () => nodes.forEach(n => positions.set(n.id, { x: n.x, y: n.y })));
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { sim.stop(); for (let i = 0; i < 300; i++) sim.tick(); sim.on("tick")(); }
+    node.call(d3.drag()
+      .on("start", (e, d) => { if (!e.active) sim.alphaTarget(0.2).restart(); d.fx = d.x; d.fy = d.y; })
+      .on("drag", (e, d) => { d.fx = e.x; d.fy = e.y; })
+      .on("end", (e, d) => { if (!e.active) sim.alphaTarget(0); d.fx = null; d.fy = null; }));
+    highlight();
+  }
+
+  function trim(s, n) { return s.length > n ? s.slice(0, n - 1) + "…" : s; }
+
+  function highlight() {
+    const id = state.selected;
+    const near = new Set(id ? [id] : []);
+    if (id) visibleLinks().forEach(l => { if (l.source === id) near.add(l.target); if (l.target === id) near.add(l.source); });
+    nodeLayer.selectAll("g.node").classed("dim", d => id && !near.has(d.id));
+    linkLayer.selectAll("line").classed("dim", d => {
+      if (!id) return false;
+      const s = d.source.id || d.source, t = d.target.id || d.target;
+      return s !== id && t !== id;
+    });
+  }
+
+  // Detail panel
+  const panel = document.getElementById("panel");
+  function linksOf(id) { return DATA.links.filter(l => l.source === id || l.target === id).sort((a, b) => (b.score || 1) - (a.score || 1)); }
+
+  function matchCard(l, id) {
+    const other = byId.get(l.source === id ? l.target : l.source);
+    if (l.kind === "known") {
+      const what = l.relation === "same_company" ? "Same company (Polimi spin-off)" : "Co-applicant of the patent";
+      return `<button class="match" data-go="${esc(other.id)}"><span class="row"><strong>${esc(other.label)}</strong><span class="chip ok">known</span></span><span class="terms">${esc(what)}</span></button>`;
+    }
+    const w = Math.max(4, Math.min(100, (l.score - 0.4) / 0.3 * 100));
+    return `<button class="match" data-go="${esc(other.id)}">
+      <span class="row"><strong>${esc(trim(other.label, 60))}</strong><span class="mono">${fmt(l.score)}</span></span>
+      <span class="bar"><span style="width:${w}%"></span></span>
+      <span class="terms">${esc(l.terms.join(" · "))}${l.low ? " · <em>title-only patent</em>" : ""}</span></button>`;
+  }
+
+  function render(id) {
+    const n = id && byId.get(id);
+    if (!n) {
+      panel.innerHTML = `<span class="eyebrow">How to read the map</span>
+        <h3>Click a node to see why it is connected</h3>
+        <p class="text">Squares are Polimi patents, circles Lombard innovative startups, diamonds Polimi spin-offs. A line means the patent abstract and the startup description are semantically close (thicker = closer, dashed = the patent has only a title). Black lines are verified links.</p>
+        <p class="text">Startups with a ring are research-less: close to a Polimi patent, with no known tie to Polimi. Unmatched patents are hidden here and listed below as orphan technologies.</p>
+        <p class="text">Drag to rearrange, scroll or pinch to zoom.</p>`;
+      return;
+    }
+    const L = linksOf(id);
+    const chips = [];
+    let body = "";
+    if (n.type === "patent") {
+      if (n.orphan) chips.push(`<span class="chip flag">orphan</span>`);
+      if (n.titleOnly) chips.push(`<span class="chip flag">title only</span>`);
+      if (n.industry) chips.push(`<span class="chip ok">industrial partner</span>`);
+      body = `<dl class="kv"><dt>Publication</dt><dd class="mono">${esc(n.ref)}</dd><dt>Priority</dt><dd class="mono">${esc(n.priority)}</dd>
+        <dt>IPC</dt><dd class="mono">${esc(n.ipcAll)}</dd><dt>Applicants</dt><dd>${esc(n.applicants)}</dd></dl>
+        ${n.text ? `<p class="text">${esc(n.text)}</p>` : `<p class="text">No abstract available: matched on the title only.</p>`}
+        ${n.orphan && n.bestStartup && byId.get(n.bestStartup) ? `<p class="text">Closest startup: <strong>${esc(byId.get(n.bestStartup).label)}</strong> at ${fmt(n.best)}, below the ${M.threshold} threshold.</p>` : ""}`;
+    } else if (n.type === "startup") {
+      if (n.researchless) chips.push(`<span class="chip flag">research-less</span>`);
+      if (n.spinoff) chips.push(`<span class="chip ok">Polimi spin-off</span>`);
+      if (n.noText) chips.push(`<span class="chip">no description</span>`);
+      body = `<dl class="kv"><dt>Company</dt><dd>${esc(n.legal)}</dd><dt>Based in</dt><dd>${esc(n.place)}</dd>
+        <dt>Sector</dt><dd>${esc(n.sector)}</dd><dt>VAT</dt><dd class="mono">${esc(n.ref)}</dd>
+        ${n.website ? `<dt>Website</dt><dd><a href="${esc(/^https?:/.test(n.website) ? n.website : "https://" + n.website)}" target="_blank" rel="noopener">${esc(n.website)}</a></dd>` : ""}</dl>
+        ${n.text ? `<p class="text">${esc(n.text)}</p>` : ""}`;
+    } else {
+      chips.push(`<span class="chip ok">Polimi spin-off</span>`);
+      body = `<dl class="kv"><dt>Company</dt><dd>${esc(n.legal)}</dd><dt>Founded</dt><dd class="mono">${esc(n.founded)}</dd>
+        ${n.website ? `<dt>Website</dt><dd><a href="${esc(/^https?:/.test(n.website) ? n.website : "https://" + n.website)}" target="_blank" rel="noopener">${esc(n.website)}</a></dd>` : ""}
+        <dt>Source</dt><dd><a href="${esc(n.evidence)}" target="_blank" rel="noopener">Polimi TTO page</a></dd></dl>
+        ${n.text ? `<p class="text">${esc(n.text)}</p>` : ""}`;
+    }
+    const kind = { patent: "Polimi patent", startup: "Lombard startup", spinoff: "Polimi spin-off" }[n.type];
+    panel.innerHTML = `<span class="eyebrow">${kind}</span><h3>${esc(n.label)}</h3>
+      ${chips.length ? `<div class="chips">${chips.join("")}</div>` : ""}${body}
+      <div class="matches"><span class="eyebrow">${L.length ? `Links (${L.length})` : "No links at the current threshold"}</span>${L.map(l => matchCard(l, id)).join("")}</div>`;
+    panel.querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => select(b.dataset.go)));
+  }
+
+  function select(id) {
+    state.selected = id;
+    render(id);
+    highlight();
+  }
+
+  // Gap registers
+  const orphanRows = document.getElementById("orphanRows");
+  function renderOrphans() {
+    const hideInd = document.getElementById("hideIndustry").checked;
+    orphanRows.innerHTML = DATA.orphans.map(pid => byId.get("P:" + pid)).filter(n => n && !(hideInd && n.industry)).map(n => {
+      const best = n.bestStartup && byId.get(n.bestStartup);
+      const flags = [n.industry ? `<span class="chip ok">industrial partner</span>` : "", n.titleOnly ? `<span class="chip flag">title only</span>` : ""].join(" ");
+      return `<tr tabindex="0" data-go="${esc(n.id)}"><td>${esc(n.label)}<span class="sub">${esc(n.ref)} · ${esc(n.priority)}</span>${flags.trim() ? `<div class="chips" style="margin-top:4px">${flags}</div>` : ""}</td>
+        <td class="mono">${esc(n.ipc)}</td><td>${best ? esc(best.label) : "–"}</td><td class="num">${fmt(n.best)}</td></tr>`;
+    }).join("");
+    bindRows(orphanRows);
+  }
+  document.getElementById("hideIndustry").addEventListener("change", renderOrphans);
+
+  const rlRows = document.getElementById("rlRows");
+  function renderResearchless() {
+    rlRows.innerHTML = DATA.researchless.map(v => byId.get("S:" + v)).filter(Boolean).map(n => {
+      const L = linksOf(n.id).filter(l => l.kind === "similarity");
+      const top = L[0];
+      const p = top && byId.get(top.source);
+      const lowOnly = L.length && L.every(l => l.low);
+      return `<tr tabindex="0" data-go="${esc(n.id)}"><td><strong>${esc(n.label)}</strong><span class="sub">${esc(n.place)} · ${L.length} match${L.length === 1 ? "" : "es"}</span>${lowOnly ? `<div class="chips" style="margin-top:4px"><span class="chip flag">title-only matches</span></div>` : ""}</td>
+        <td>${p ? esc(trim(p.label, 80)) : "–"}${top ? `<span class="sub">${esc(top.terms.slice(0, 3).join(" · "))}</span>` : ""}</td><td class="num">${top ? fmt(top.score) : "–"}</td></tr>`;
+    }).join("");
+    bindRows(rlRows);
+  }
+
+  function bindRows(tbody) {
+    tbody.querySelectorAll("tr[data-go]").forEach(tr => {
+      const go = () => { select(tr.dataset.go); document.querySelector(".map").scrollIntoView({ behavior: "smooth", block: "start" }); };
+      tr.addEventListener("click", go);
+      tr.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); go(); } });
+    });
+  }
+
+  document.getElementById("method").innerHTML = `
+    <span class="eyebrow">Method and sources</span>
+    <p>Patents: Polimi applications in IPC A61B, A61F, A61L, A61M, A61N, G16H (Espacenet), abstracts from EPO Open Patent Services. Startups: InfoCamere register of innovative startups (list of ${esc(M.startupList)}), Lombardy, ATECO 32.50 / 26.60 or medtech keywords; descriptions from each company's homepage. Spin-offs: Polimi Technology Transfer Office public list (${M.nSpinoffsListed} listed).</p>
+    <p>Similarity: cosine between multilingual sentence embeddings (<span class="mono">${esc(M.model)}</span>), threshold ${M.threshold} calibrated on hand-labelled pairs. Similarity is a signal, not proof of fit; licences and informal collaborations are mostly not public, so "orphan" and "research-less" are starting points for human review. Only organisations are shown, never inventors or founders. Built ${esc(M.built)}.</p>`;
+
+  // Re-colour on theme change
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", colors);
+  new MutationObserver(colors).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  render(null);
+  renderOrphans();
+  renderResearchless();
+  draw();
+  window.addEventListener("resize", () => { const W = svg.node().clientWidth, H = svg.node().clientHeight; svg.attr("viewBox", [0, 0, W, H]); });
+})();
+</script>
