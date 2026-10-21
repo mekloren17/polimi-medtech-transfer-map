@@ -145,7 +145,40 @@ def build_data():
             "nStartups": len(startups),
             "nStartupsText": int((startups["description"] != "").sum()),
             "nSpinoffsListed": len(spinoffs),
+            "nAbstracts": int((patents["text_source"] == "abstract").sum()),
+            "nAbstractsOps": int((patents["abstract_source"] == "epo_ops").sum()),
+            "nTranslated": int(tr["kind"].eq("startup_description").sum()) if len(tr) else 0,
+            "nByAteco": int(startups["match_reason"].str.startswith("ateco").sum()),
+            **registry_counts(cfg),
+            **calibration(sim),
         },
+    }
+
+
+def registry_counts(cfg):
+    """Totals of the raw startup register, when the raw file is available locally."""
+    csvs = sorted(Path("data/raw/startups").glob("startup_*.csv"))
+    if not csvs:
+        return {}
+    raw = pd.read_csv(csvs[-1], sep="|", encoding="latin-1", dtype=str, keep_default_na=False)
+    region = raw[[c for c in raw.columns if c.strip() == "regione"][0]].str.strip()
+    return {"nItaly": len(raw), "nRegion": int(region.str.casefold().eq(cfg["startups"]["region"].casefold()).sum())}
+
+
+def calibration(sim):
+    """Precision and recall of the current threshold on the hand-labelled pairs."""
+    path = Path("data/manual/calibration_pairs.csv")
+    if not path.exists():
+        return {}
+    lab = pd.read_csv(path, dtype=str, keep_default_na=False)
+    lab = lab[lab["label"].isin(["0", "1"])]
+    predicted = set(zip(sim["tech_id"], sim["startup_id"]))
+    pred = [(p, v) in predicted for p, v in zip(lab["patent_id"], lab["vat_number"])]
+    y = lab["label"].eq("1").tolist()
+    tp = sum(a and b for a, b in zip(pred, y))
+    return {
+        "calPairs": len(lab), "calPositive": sum(y),
+        "calPrecision": round(tp / max(sum(pred), 1), 2), "calRecall": round(tp / max(sum(y), 1), 2),
     }
 
 
