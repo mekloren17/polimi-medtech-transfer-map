@@ -254,6 +254,9 @@ td small { display: block; color: var(--muted); font-size: 12px; }
 .limits li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 6px; height: 6px; border-radius: 50%; background: var(--red); }
 .limits b { color: var(--fg); }
 .limits.checks li::before { background: var(--verified); }
+.limits.refs { margin-top: 20px; }
+.limits.refs li::before { background: var(--muted); }
+.limits.refs a { color: var(--fg); text-decoration: underline; text-underline-offset: 3px; }
 .sub-h { margin: 0 0 16px; font: 700 17px var(--font-body); color: var(--muted); }
 .limits + .sub-h { margin-top: 36px; }
 .report footer { color: var(--muted); font-size: 14px; border-top: 1px solid var(--line); padding-top: 24px; }
@@ -986,6 +989,17 @@ td small { display: block; color: var(--muted); font-size: 12px; }
           <li><b>Innovative startups only.</b> The InfoCamere register lists them for at most five years; established companies are outside this map, and ${N(M.nStartups - M.nStartupsText)} startups without a website description could not be compared.</li>
           <li><b>Public records only.</b> Licences and research contracts are not published, so "no visible tie" means no tie in open records.</li>
           <li><b>Closeness, not commercial fit.</b> Similarity measures how close two descriptions are; the map ranks where a conversation is most likely to be useful.</li>
+        </ul>
+      </section>
+
+      <section aria-labelledby="hRelated">
+        <h3 id="hRelated">Related work</h3>
+        <p>Each part of this map has precedents; the combination does not seem to. Earlier studies match university texts to company texts, or patents to startups, from a single firm's point of view. This map starts from a university's portfolio, reads young companies from their own websites, compares Italian and English texts with one multilingual model, and reports the gaps.</p>
+        <ul class="limits refs">
+          <li><b>University research against company websites.</b> Woltmann and Alkærsig trace knowledge transfer by text-mining university publications against company websites and documents (<a href="https://doi.org/10.1007/s11192-018-2849-9" target="_blank" rel="noopener">Scientometrics, 2018</a>).</li>
+          <li><b>Patents against startups.</b> Kim, Kim and Sohn match patent abstracts with Crunchbase startup profiles to suggest partners to an acquiring firm (<a href="https://doi.org/10.1016/j.dss.2019.113229" target="_blank" rel="noopener">Decision Support Systems, 2020</a>); Chung, Ko and Yoon look for university inventor groups suited to a firm (<a href="https://ideas.repec.org/a/eee/tefoso/v171y2021ics0040162521004200.html" target="_blank" rel="noopener">Technological Forecasting and Social Change, 2021</a>).</li>
+          <li><b>Text similarity between patents.</b> Arts, Cassiman and Gomez show that it agrees with expert judgement (<a href="https://doi.org/10.1002/smj.2699" target="_blank" rel="noopener">Strategic Management Journal, 2018</a>), which is why the threshold here is checked on hand-labelled pairs. Hain et al. and Ascione and Sterzi use and compare text embeddings for it (<a href="https://doi.org/10.1016/j.techfore.2022.121559" target="_blank" rel="noopener">2022</a>, <a href="https://arxiv.org/abs/2403.16630" target="_blank" rel="noopener">2024 preprint</a>).</li>
+          <li><b>Firm websites as data.</b> Kinne and Axenbeck show that website availability and content vary with firm size, age and sector (<a href="https://doi.org/10.1007/s11192-020-03726-9" target="_blank" rel="noopener">Scientometrics, 2020</a>): startups without a usable website cannot appear on this map.</li>
         </ul>
       </section>
 
