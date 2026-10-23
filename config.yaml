@@ -97,12 +97,12 @@ startups:
 embedding:
   # Multilingual: startup descriptions are mostly Italian, patent abstracts mostly English.
   # Compared with BAAI/bge-m3 on data/manual/calibration_pairs.csv: bge-m3 has no language
-  # bias but ranks the labelled pairs worse (AUC 0.73 vs 0.83), so this model is kept.
+  # bias but ranks the labelled pairs worse (AUC 0.72 vs 0.89), so this model is kept.
   model: sentence-transformers/paraphrase-multilingual-mpnet-base-v2
 
 similarity:
-  # Best F1 on the calibration pairs (src/score/calibrate.py report): about 0.47 precision,
-  # 0.74 recall. Provisional: the labels are a draft still to be reviewed.
+  # Best F1 on the calibration pairs (src/score/calibrate.py report): about 0.57 precision,
+  # 0.80 recall. Labels drafted by Claude with a reason per pair; still to be checked by the author.
   threshold: 0.55
   # A link also needs the startup to be among the patent's closest N: a patent with a very
   # broad description (e.g. a generic digital-health method) otherwise links to dozens

@@ -1,16 +1,16 @@
 {
  "labelled_pairs": 142,
- "positive": 19,
+ "positive": 15,
  "models": {
   "sentence-transformers/paraphrase-multilingual-mpnet-base-v2": {
-   "auc": 0.832,
+   "auc": 0.89,
    "best_threshold": 0.55,
-   "best_f1": 0.65
+   "best_f1": 0.667
   },
   "BAAI/bge-m3": {
-   "auc": 0.751,
-   "best_threshold": 0.55,
-   "best_f1": 0.4
+   "auc": 0.722,
+   "best_threshold": 0.58,
+   "best_f1": 0.343
   }
  }
 }

@@ -56,3 +56,12 @@ To add pairs from the national data: rename the current file (keep it, it holds 
 run `python src/score/calibrate.py export ...` to create a new set, then copy your existing
 labels into it by matching `patent_id` and `vat_number`. The export refuses to overwrite an
 existing file, so labels are never lost by accident.
+
+## Current state of the labels
+
+The labels in the file were drafted by Claude (an LLM) against the rule above, reading only the
+two texts, blind to the scores. Each row has a one-line reason in `note` and a `confidence`
+(`high`, `medium`, `low`). To check them quickly: read every `1`, every `low` row, then a sample
+of the `high` ones; change the label and the note where you disagree, and replace
+"Claude, to check:" with your own note. Until that is done the site says the labels were drafted
+with an LLM.

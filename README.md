@@ -44,7 +44,7 @@ How to obtain the raw files is explained in `data/raw/README.md`. Raw downloads 
    - a startup is *research-less* if a Polimi patent reaches the threshold but no known tie exists.
 6. **Build** the site (`src/build/site.py`).
 
-Model, threshold and scope are set in `config.yaml`. The threshold is calibrated on hand-labelled patent–startup pairs (`data/manual/calibration_pairs.csv`, see `docs/labelling.md`); the model comparison is saved in `data/processed/calibration_report.json`.
+Model, threshold and scope are set in `config.yaml`. The threshold is calibrated on labelled patent–startup pairs (`data/manual/calibration_pairs.csv`, see `docs/labelling.md`); the model comparison is saved in `data/processed/calibration_report.json`.
 
 ## Reproduce it
 
@@ -131,7 +131,7 @@ multilingual model, and reports the **gaps** rather than recommendations.
   use patents and language-model similarity to find university inventor groups for a firm [3].
 - **Text similarity between patents.** Arts, Cassiman and Gomez show that text similarity
   between patents agrees with expert judgement [4], which motivates checking the threshold
-  against hand-labelled pairs here. Hain et al. measure patent similarity with text
+  against labelled pairs here. Hain et al. measure patent similarity with text
   embeddings [5]; Ascione and Sterzi compare embedding models for this task [6].
 - **Firm websites as data.** Kinne and Axenbeck build a web-mining framework for firm websites
   and show that website availability and content vary with firm size, age and sector [7]:
@@ -147,7 +147,7 @@ multilingual model, and reports the **gaps** rather than recommendations.
 
 ## Limitations
 
-- Semantic similarity is a signal, not proof of a real fit: at the chosen threshold, roughly half of the links in the calibration set are not relevant. Results are a starting point for human review.
+- Semantic similarity is a signal, not proof of a real fit: at the chosen threshold, about four in ten links in the calibration set are not relevant (precision 0.57). Results are a starting point for human review.
 - Licences and research contracts are mostly not public, so a technology marked "orphan" might be licensed privately, and a startup marked "research-less" may well work with Polimi.
 - The register covers innovative startups for at most five years; established companies are outside the map, and startups without a usable website description could not be compared.
 - Personal data: inventors and founders are not profiled; only organisation-level data is published.
