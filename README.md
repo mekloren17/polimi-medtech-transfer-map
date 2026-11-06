@@ -142,11 +142,6 @@ and then the four commands above. The initial `patents.csv` table was built from
 
 ## Related work
 
-<!-- TO VERIFY before publishing: every reference below was compiled from abstracts and
-     catalogue pages, not full texts. Check authors, year, pages and DOI on the publisher's
-     site, and read at least introduction and conclusions before keeping a claim. Entries
-     marked [check DOI] could not be confirmed at all. -->
-
 Each part of this project has precedents; the combination does not seem to. Earlier work matches
 university texts to company texts, or patents to startups, but from a single firm's point of
 view (who should we partner with or acquire?). This map starts from a university's portfolio,
@@ -167,13 +162,13 @@ multilingual model, and reports the **gaps** rather than recommendations.
   and show that website availability and content vary with firm size, age and sector [7]:
   startups without a usable website cannot appear on this map.
 
-1. Woltmann, S. L., & Alkærsig, L. (2018). Tracing knowledge transfer from universities to industry: a text mining approach. *Scientometrics*, 117(1), 449–472. https://doi.org/10.1007/s11192-018-2849-9
+1. Woltmann, S. L., & Alkærsig, L. (2018). Tracing university–industry knowledge transfer through a text mining approach. *Scientometrics*, 117(1), 449–472. https://doi.org/10.1007/s11192-018-2849-9
 2. Kim, J., Kim, J., & Sohn, S. Y. (2020). Recommendation of startups as technology cooperation candidates from the perspectives of similarity and potential: A deep learning approach. *Decision Support Systems*, 130, 113229. https://doi.org/10.1016/j.dss.2019.113229
-3. Chung, J., Ko, N., & Yoon, J. (2021). Inventor group identification approach for selecting university-industry collaboration partners. *Technological Forecasting and Social Change*, 171. [check DOI]
+3. Chung, J., Ko, N., & Yoon, J. (2021). Inventor group identification approach for selecting university-industry collaboration partners. *Technological Forecasting and Social Change*, 171, 120988. https://doi.org/10.1016/j.techfore.2021.120988
 4. Arts, S., Cassiman, B., & Gomez, J. C. (2018). Text matching to measure patent similarity. *Strategic Management Journal*, 39(1), 62–84. https://doi.org/10.1002/smj.2699
-5. Hain, D. S., Jurowetzki, R., Buchmann, T., & Wolf, P. (2022). A text-embedding-based approach to measuring patent-to-patent technological similarity. *Technological Forecasting and Social Change*, 177, 121559. https://doi.org/10.1016/j.techfore.2022.121559 [check DOI]
-6. Ascione, G. S., & Sterzi, V. (2024). A comparative analysis of embedding models for patent similarity. Preprint, arXiv:2403.16630.
-7. Kinne, J., & Axenbeck, J. (2020). Web mining for innovation ecosystem mapping: a framework and a large-scale pilot study. *Scientometrics*, 125. https://doi.org/10.1007/s11192-020-03726-9
+5. Hain, D. S., Jurowetzki, R., Buchmann, T., & Wolf, P. (2022). A text-embedding-based approach to measuring patent-to-patent technological similarity. *Technological Forecasting and Social Change*, 177, 121559. https://doi.org/10.1016/j.techfore.2022.121559
+6. Ascione, G. S., & Sterzi, V. (2024). A comparative analysis of embedding models for patent similarity. Preprint, [arXiv:2403.16630](https://arxiv.org/abs/2403.16630).
+7. Kinne, J., & Axenbeck, J. (2020). Web mining for innovation ecosystem mapping: a framework and a large-scale pilot study. *Scientometrics*, 125, 2011–2041. https://doi.org/10.1007/s11192-020-03726-9
 
 ## Limitations
 
