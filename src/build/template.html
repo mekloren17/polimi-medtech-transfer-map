@@ -978,7 +978,7 @@ td small { display: block; color: var(--muted); font-size: 12px; }
         <h3 id="hLimits">Validation and limits</h3>
         <h4 class="sub-h">How the results were checked</h4>
         <ul class="limits checks">
-          <li><b>Calibrated threshold.</b> ${N(M.calPairs || "–")} patent–startup pairs were labelled against a written rule, blind to the scores, each with a one-line reason. The labels were drafted with an LLM (Claude) and are being checked by the author. At the chosen threshold the links have precision ${N(M.calPrecision ?? "–")} and recall ${N(M.calRecall ?? "–")} on that set.</li>
+          <li><b>Calibrated threshold.</b> ${N(M.calPairs || "–")} patent–startup pairs were labelled against a written rule, blind to the scores, each with a one-line reason. At the chosen threshold the links have precision ${N(M.calPrecision ?? "–")} and recall ${N(M.calRecall ?? "–")} on that set.</li>
           ${M.aucAlt ? `<li><b>Two models compared.</b> ${esc(M.altModel)} removes a language bias but ranked the labelled pairs worse (AUC ${N(M.aucAlt.toFixed(2))} against ${N(M.aucMain.toFixed(2))}), so the multilingual MPNet model was kept.</li>` : ""}
           ${M.maxLinks ? `<li><b>Generic patents contained.</b> A broadly worded digital-health patent matched dozens of startups on shared vocabulary; each patent now keeps at most its ${N(M.maxLinks)} closest startups.</li>` : ""}
           ${M.nGooglePatents ? `<li><b>No title-only matching.</b> The ${N(M.nGooglePatents)} patents without an abstract in the EPO data were completed from their Google Patents descriptions.</li>` : ""}
@@ -988,6 +988,7 @@ td small { display: block; color: var(--muted); font-size: 12px; }
         <ul class="limits">
           <li><b>Innovative startups only.</b> The InfoCamere register lists them for at most five years; established companies are outside this map, and ${N(M.nStartups - M.nStartupsText)} startups without a website description could not be compared.</li>
           <li><b>Public records only.</b> Licences and research contracts are not published, so "no visible tie" means no tie in open records.</li>
+          <li><b>Labels not yet reviewed by a person.</b> The calibration labels were drafted by an LLM (Claude) following the written rule, one pair at a time, and have not yet been fully checked by hand. Precision and recall are therefore provisional: they measure agreement with that rule as the LLM applied it, not with expert judgement.</li>
           <li><b>Closeness, not commercial fit.</b> Similarity measures how close two descriptions are; the map ranks where a conversation is most likely to be useful.</li>
         </ul>
       </section>

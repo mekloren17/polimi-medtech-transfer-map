@@ -89,7 +89,7 @@ def build_data():
     tr = read("translations_en.csv") if (PROCESSED / "translations_en.csv").exists() else pd.DataFrame(
         columns=["kind", "key", "text_en"])
     en = {kind: g.set_index("key")["text_en"].to_dict() for kind, g in tr.groupby("kind")}
-    en_title, en_desc = (en.get(k, {}) for k in ("patent_title", "startup_description"))
+    en_title, en_desc, en_abs = (en.get(k, {}) for k in ("patent_title", "startup_description", "patent_abstract"))
     rl_ids = set(researchless["vat_number"])
     linked_spinoffs = set(known.loc[known["target_type"] == "spinoff", "target_id"]) | set(
         known.loc[known["source_type"] == "spinoff", "source_id"])
@@ -101,7 +101,7 @@ def build_data():
             "id": "P:" + r.patent_id, "type": "patent", "ref": r.patent_id,
             "label": clip(en_title.get(r.patent_id) or (r.title.capitalize() if r.title.isupper() else r.title), 70),
             "mt": r.patent_id in en_title,
-            "text": clip(r.abstract, 700) if r.abstract else "",
+            "text": clip(en_abs.get(r.patent_id, r.abstract), 700) if r.abstract else "",
             "ipc": r.ipc_subclasses.split("|")[0] if r.ipc_subclasses else "",
             # Technology family for the map clusters: first medtech IPC subclass
             "group": (r.medtech_subclasses.split("|")[0] if r.medtech_subclasses else "A61B"),

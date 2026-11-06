@@ -1,0 +1,7 @@
+kind,key,text_en,note
+patent_title,AR098146A1,Improved method and system for administering a pulmonary surfactant by atomisation,"Title is in Spanish, which the Italian-English model cannot translate"
+patent_title,IT201600096247A1,Polyurethane and hydrogel bandage containing chlorhexidine,"Model translated ""bendaggio"" as ""bundling"""
+patent_title,IT201600096214A1,Polyurethane and hydrogel bandage containing silver nanoparticles,"Model translated ""bendaggio"" as ""bundling"""
+patent_title,IT1318567B1,Method for automatically repositioning a portion of the body surface in space for radiodiagnostics and radiotherapy,"Model translated ""radioterapia"" as ""radiant"""
+patent_title,IT202100003077U1,"Portable modular system for sanitising and lighting an operating theatre, especially in field hospitals","Model translated ""campali"" literally"
+patent_abstract,IT202400002722U1,The present invention relates to an injector for the administration of medicines and a system comprising such an injector. The injector and the system find particular application in the administration of slow-release and rapid-release insulin to diabetic patients. The state of the art includes the creation of injectors.,"Removes an Italian section heading (""Descrizione della tecnica anteriore"") left in the Google Patents text"

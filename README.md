@@ -33,7 +33,7 @@ Built end to end by one person, from the research question to the published site
 - **Data collection from public sources, done politely:** EPO OPS API client with caching, robots.txt-aware scrapers for company homepages and Google Patents, and a documented manual step where a source must not be scraped.
 - **Entity resolution:** matching spin-offs, patent applicants and the startup register by VAT number, website domain and normalised legal names.
 - **Multilingual NLP:** sentence embeddings over Italian and English texts, a check for language bias in the scores, local machine translation for display, and explanatory terms for every link.
-- **Evaluation, not just a model:** a threshold calibrated on labelled pairs (precision, recall, AUC), a comparison of two embedding models, and a cap on links per patent after spotting a failure mode.
+- **Evaluation, not just a model:** a threshold calibrated on labelled pairs (precision, recall, AUC; labels still provisional, see [Limitations](#limitations)), a comparison of two embedding models, and a cap on links per patent after spotting a failure mode.
 - **Communication:** an interactive d3 map with a guided data tour and a method page that states its limits.
 - **Responsible data handling:** organisation-level data only, personal names redacted, raw downloads never redistributed.
 
@@ -116,7 +116,7 @@ and then the four commands above. The initial `patents.csv` table was built from
 ├── config.yaml            # scope, keywords, model, threshold
 ├── data/
 │   ├── raw/               # untouched downloads (not committed; README explains how to get them)
-│   ├── manual/            # hand-edited inputs: calibration labels, redacted descriptions
+│   ├── manual/            # hand-edited inputs: calibration labels, redacted descriptions, translation fixes
 │   └── processed/         # clean tables, edges, gap lists, calibration report
 ├── docs/
 │   ├── img/               # screenshot used in this README
@@ -136,6 +136,7 @@ and then the four commands above. The initial `patents.csv` table was built from
 - [x] v0.1 — Polimi medtech patents + Lombard startups, similarity scoring, orphan list
 - [x] v0.1.1 — startups extended to the whole of Italy, grouped by macro-area
 - [x] v0.2 — spin-offs and known ties; static site with graph and method page; calibrated threshold
+- [ ] v0.2.1 — human review of the calibration labels
 - [ ] v0.3 — CORDIS EU research projects as a second kind of technology
 - [ ] v1.0 — other universities and IRCCS; other verticals
 
@@ -176,6 +177,7 @@ multilingual model, and reports the **gaps** rather than recommendations.
 
 ## Limitations
 
+- **The calibration labels are provisional.** The 146 patent–startup pairs in `data/manual/calibration_pairs.csv` were labelled by an LLM (Claude) against the written rule in `docs/labelling.md`, each with a one-line reason and a confidence level, and have not yet been fully reviewed by a person. Precision, recall and the threshold therefore measure agreement with that rule as the LLM applied it, not with expert judgement. A human review (all positives and low-confidence rows first) is the next step.
 - Semantic similarity is a signal, not proof of a real fit: at the chosen threshold, about four in ten links in the calibration set are not relevant (precision 0.57). Results are a starting point for human review.
 - Licences and research contracts are mostly not public, so a technology marked "orphan" might be licensed privately, and a startup marked "research-less" may well work with Polimi.
 - The register covers innovative startups for at most five years; established companies are outside the map, and startups without a usable website description could not be compared.
