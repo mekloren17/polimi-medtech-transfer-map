@@ -28,3 +28,6 @@ desktop.ini
 
 # Embeddings: reproducible with src/embed/embed.py, binary and large
 data/processed/embeddings/
+
+# Launch video and its working files (kept locally)
+brag-output/

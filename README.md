@@ -11,6 +11,34 @@ Every link comes with a similarity score and the terms that explain it. Links ar
 
 > Independent research project. It is **not affiliated with, endorsed by or produced for Politecnico di Milano** or its Technology Transfer Office. "Polimi" only names the subject of the analysis.
 
+**[Open the interactive map →](https://mekloren17.github.io/polimi-medtech-transfer-map/)**
+
+![The transfer map: Polimi patents grouped by IPC class, Italian startups grouped by macro-area, links where their descriptions are close](docs/img/transfer-map.png)
+
+## At a glance
+
+| | |
+|---|---|
+| Polimi medtech patent families | **117** |
+| Italian medtech innovative startups | **417** |
+| Patent–startup links above the calibrated threshold | **54** |
+| Ties visible in public records (spin-offs, co-applicants) | **5** |
+| Startups close to Polimi research with no visible tie | **35** |
+| Patents with no Italian startup in reach | **87** |
+
+## What this project shows
+
+Built end to end by one person, from the research question to the published site:
+
+- **Data collection from public sources, done politely:** EPO OPS API client with caching, robots.txt-aware scrapers for company homepages and Google Patents, and a documented manual step where a source must not be scraped.
+- **Entity resolution:** matching spin-offs, patent applicants and the startup register by VAT number, website domain and normalised legal names.
+- **Multilingual NLP:** sentence embeddings over Italian and English texts, a check for language bias in the scores, local machine translation for display, and explanatory terms for every link.
+- **Evaluation, not just a model:** a threshold calibrated on labelled pairs (precision, recall, AUC), a comparison of two embedding models, and a cap on links per patent after spotting a failure mode.
+- **Communication:** an interactive d3 map with a guided data tour and a method page that states its limits.
+- **Responsible data handling:** organisation-level data only, personal names redacted, raw downloads never redistributed.
+
+**Stack:** Python (pandas, sentence-transformers, Hugging Face transformers, requests, BeautifulSoup), d3.js, GitHub Pages.
+
 ## Outputs
 
 1. **Interactive site** (`site/index.html`, for GitHub Pages): a navigable graph of patents, spin-offs and startups, the two gap lists and a method page.
@@ -91,6 +119,7 @@ and then the four commands above. The initial `patents.csv` table was built from
 │   ├── manual/            # hand-edited inputs: calibration labels, redacted descriptions
 │   └── processed/         # clean tables, edges, gap lists, calibration report
 ├── docs/
+│   ├── img/               # screenshot used in this README
 │   ├── schema.md          # data model
 │   └── labelling.md       # how to label and check the calibration pairs
 ├── src/
@@ -99,7 +128,7 @@ and then the four commands above. The initial `patents.csv` table was built from
 │   ├── embed/
 │   ├── score/
 │   └── build/             # site generation (template.html + site.py)
-└── site/                  # generated site for GitHub Pages
+└── site/                  # generated site, deployed by .github/workflows/pages.yml
 ```
 
 ## Roadmap

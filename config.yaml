@@ -112,4 +112,4 @@ similarity:
 site:
   # Public GitHub repository linked from the "Reproduce it" section of the site.
   # Leave empty until the repository is published.
-  repo_url: ""
+  repo_url: "https://github.com/mekloren17/polimi-medtech-transfer-map"

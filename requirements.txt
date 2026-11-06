@@ -1,11 +1,13 @@
-pandas>=2.2
-requests>=2.32
-python-epo-ops-client>=4.1
-pyyaml>=6.0
-sentence-transformers>=3.0
-scikit-learn>=1.5
-networkx>=3.3
-pyvis>=0.3
-tqdm>=4.66
-beautifulsoup4>=4.12
-pyarrow>=15.0
+# Versions used to produce the committed results (Python 3.12).
+pandas==3.0.6
+numpy==2.5.4
+pyarrow==26.0.0
+PyYAML==6.0.3
+requests==2.34.2
+beautifulsoup4==4.15.0
+python-epo-ops-client==4.2.3
+sentence-transformers==6.1.0
+transformers==5.20.1
+torch==2.14.1
+sentencepiece==0.2.2
+sacremoses==0.2.0
